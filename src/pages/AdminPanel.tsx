@@ -46,9 +46,26 @@ const AdminPanel = () => {
   }
 
   const handleSaveTitle = () => {
+    // TODO: Save to backend when Supabase is connected
     toast({
       title: "Title Updated",
       description: "Website title has been saved successfully.",
+    });
+  };
+
+  const handleSaveClan = (clanId: string) => {
+    // TODO: Save to backend when Supabase is connected
+    toast({
+      title: "Clan Saved",
+      description: "Clan data has been saved successfully.",
+    });
+  };
+
+  const handleSaveAllClans = () => {
+    // TODO: Save to backend when Supabase is connected
+    toast({
+      title: "All Clans Saved",
+      description: "All clan data has been saved successfully.",
     });
   };
 
@@ -203,10 +220,16 @@ const AdminPanel = () => {
               <TabsContent value="clans" className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Manage Clans</h3>
-                  <Button onClick={handleAddClan} className="bg-[#ff6f00] hover:bg-[#ff6f00]/90">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Clan
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button onClick={handleSaveAllClans} className="bg-green-600 hover:bg-green-600/90">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save All
+                    </Button>
+                    <Button onClick={handleAddClan} className="bg-[#ff6f00] hover:bg-[#ff6f00]/90">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Clan
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -247,7 +270,17 @@ const AdminPanel = () => {
                   {/* Clan Editor */}
                   {selectedClanData && (
                     <div className="space-y-4">
-                      <h4 className="font-semibold">Edit Clan: {selectedClanData.name}</h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold">Edit Clan: {selectedClanData.name}</h4>
+                        <Button 
+                          onClick={() => handleSaveClan(selectedClan)}
+                          className="bg-[#1a237e] hover:bg-[#1a237e]/90"
+                          size="sm"
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Clan
+                        </Button>
+                      </div>
                       
                       <div className="space-y-3">
                         <div>
