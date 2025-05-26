@@ -125,6 +125,8 @@ const AdminPanel = () => {
         title: "All Clans Saved",
         description: "All clan data has been saved successfully.",
       });
+      // Reload data to ensure UI is in sync
+      await loadData();
     } catch (error) {
       console.error('Error saving clans:', error);
       toast({
@@ -137,21 +139,55 @@ const AdminPanel = () => {
     }
   };
 
-  const handleAddClan = () => {
+  const handleAddClan = async () => {
     const newClan: Clan = {
       id: Date.now().toString(),
       name: `New Clan ${clans.length + 1}`,
       tag: '',
       players: []
     };
-    setClans([...clans, newClan]);
+    const updatedClans = [...clans, newClan];
+    setClans(updatedClans);
     setSelectedClan(newClan.id);
+    
+    // Auto-save new clan
+    try {
+      await clanDataService.saveClans(updatedClans);
+      toast({
+        title: "Clan Added",
+        description: "New clan has been created and saved.",
+      });
+    } catch (error) {
+      console.error('Error saving new clan:', error);
+      toast({
+        title: "Error Adding Clan",
+        description: "Failed to save new clan.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteClan = (clanId: string) => {
-    setClans(clans.filter(c => c.id !== clanId));
-    if (selectedClan === clanId && clans.length > 1) {
-      setSelectedClan(clans[0].id);
+  const handleDeleteClan = async (clanId: string) => {
+    const updatedClans = clans.filter(c => c.id !== clanId);
+    setClans(updatedClans);
+    if (selectedClan === clanId && updatedClans.length > 0) {
+      setSelectedClan(updatedClans[0].id);
+    }
+    
+    // Auto-save after deletion
+    try {
+      await clanDataService.saveClans(updatedClans);
+      toast({
+        title: "Clan Deleted",
+        description: "Clan has been removed and changes saved.",
+      });
+    } catch (error) {
+      console.error('Error deleting clan:', error);
+      toast({
+        title: "Error Deleting Clan",
+        description: "Failed to save changes.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -187,7 +223,7 @@ const AdminPanel = () => {
     }
   };
 
-  const handleBulkImport = () => {
+  const handleBulkImport = async () => {
     if (!selectedClan || !bulkInput.trim()) return;
 
     const lines = bulkInput.trim().split('\n');
@@ -205,14 +241,30 @@ const AdminPanel = () => {
 
     const clan = clans.find(c => c.id === selectedClan);
     if (clan) {
-      handleUpdateClan(selectedClan, {
-        players: [...clan.players, ...newPlayers]
-      });
+      const updatedClans = clans.map(c => 
+        c.id === selectedClan 
+          ? { ...c, players: [...c.players, ...newPlayers] }
+          : c
+      );
+      
+      setClans(updatedClans);
       setBulkInput('');
-      toast({
-        title: "Players Imported",
-        description: `Successfully imported ${newPlayers.length} players.`,
-      });
+      
+      // Auto-save after bulk import
+      try {
+        await clanDataService.saveClans(updatedClans);
+        toast({
+          title: "Players Imported",
+          description: `Successfully imported ${newPlayers.length} players and saved to database.`,
+        });
+      } catch (error) {
+        console.error('Error saving bulk import:', error);
+        toast({
+          title: "Import Error",
+          description: "Players imported but failed to save to database.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -476,7 +528,7 @@ const AdminPanel = () => {
                     disabled={!selectedClan || !bulkInput.trim()}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Import Players
+                    Import Players (Auto-Save)
                   </Button>
                 </div>
               </TabsContent>

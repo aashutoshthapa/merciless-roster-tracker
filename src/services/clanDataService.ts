@@ -39,10 +39,17 @@ export const clanDataService = {
     }
 
     console.log('Fetched clan data:', data);
+    
+    // Parse the JSON data properly
+    let clans: Clan[] = [];
+    if (data.clans && typeof data.clans === 'object') {
+      clans = Array.isArray(data.clans) ? data.clans as Clan[] : [];
+    }
+
     return {
       id: data.id,
       title: data.title,
-      clans: data.clans || []
+      clans: clans
     };
   },
 
@@ -55,7 +62,7 @@ export const clanDataService = {
         .from('clan_data')
         .update({
           title: clanData.title,
-          clans: clanData.clans,
+          clans: clanData.clans as any,
           updated_at: new Date().toISOString()
         })
         .eq('id', clanData.id);
@@ -70,7 +77,7 @@ export const clanDataService = {
         .from('clan_data')
         .insert({
           title: clanData.title,
-          clans: clanData.clans
+          clans: clanData.clans as any
         });
 
       if (error) {
