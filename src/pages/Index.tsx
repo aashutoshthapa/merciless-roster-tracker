@@ -8,14 +8,15 @@ import { Shield, Users, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ClanRoster } from '@/components/ClanRoster';
 import { ClanCheck } from '@/components/ClanCheck';
-import { mockData } from '@/utils/mockData';
+import { clanDataService } from '@/services/clanDataService';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('roster');
 
-  const { data: appData, isLoading } = useQuery({
+  const { data: appData, isLoading, error } = useQuery({
     queryKey: ['app-data'],
-    queryFn: () => mockData,
+    queryFn: () => clanDataService.getClanData(),
+    refetchInterval: 30000, // Refetch every 30 seconds to keep data fresh
   });
 
   if (isLoading) {
@@ -24,6 +25,23 @@ const Index = () => {
         <div className="text-center text-white">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
           <p>Loading CWL Tracker...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center text-white">
+          <p className="text-red-400 mb-4">Error loading data</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline" 
+            className="border-white text-white hover:bg-white hover:text-slate-900"
+          >
+            Retry
+          </Button>
         </div>
       </div>
     );

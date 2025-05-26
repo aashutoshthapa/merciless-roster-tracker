@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, LogOut, Plus, Trash2, Save } from 'lucide-react';
+import { Shield, LogOut, Plus, Trash2, Save, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { AdminLogin } from '@/components/AdminLogin';
-import { mockData } from '@/utils/mockData';
+import { clanDataService, type Clan, type Player } from '@/services/clanDataService';
 
 interface Player {
   name: string;
@@ -31,42 +30,111 @@ const AdminPanel = () => {
   const [clans, setClans] = useState<Clan[]>([]);
   const [selectedClan, setSelectedClan] = useState<string>('');
   const [bulkInput, setBulkInput] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    // Load initial data
-    setTitle(mockData.title);
-    setClans(mockData.clans);
-    if (mockData.clans.length > 0) {
-      setSelectedClan(mockData.clans[0].id);
+    if (isAuthenticated) {
+      loadData();
     }
-  }, []);
+  }, [isAuthenticated]);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Loading data from Supabase...');
+      const data = await clanDataService.getClanData();
+      setTitle(data.title);
+      setClans(data.clans);
+      if (data.clans.length > 0) {
+        setSelectedClan(data.clans[0].id);
+      }
+      console.log('Data loaded successfully:', data);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: "Error Loading Data",
+        description: "Failed to load data from database.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!isAuthenticated) {
     return <AdminLogin />;
   }
 
-  const handleSaveTitle = () => {
-    // TODO: Save to backend when Supabase is connected
-    toast({
-      title: "Title Updated",
-      description: "Website title has been saved successfully.",
-    });
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center text-white">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSaveTitle = async () => {
+    try {
+      setIsSaving(true);
+      await clanDataService.saveTitle(title);
+      toast({
+        title: "Title Updated",
+        description: "Website title has been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving title:', error);
+      toast({
+        title: "Error Saving Title",
+        description: "Failed to save title to database.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSaveClan = (clanId: string) => {
-    // TODO: Save to backend when Supabase is connected
-    toast({
-      title: "Clan Saved",
-      description: "Clan data has been saved successfully.",
-    });
+  const handleSaveClan = async (clanId: string) => {
+    try {
+      setIsSaving(true);
+      await clanDataService.saveClans(clans);
+      toast({
+        title: "Clan Saved",
+        description: "Clan data has been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving clan:', error);
+      toast({
+        title: "Error Saving Clan",
+        description: "Failed to save clan to database.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSaveAllClans = () => {
-    // TODO: Save to backend when Supabase is connected
-    toast({
-      title: "All Clans Saved",
-      description: "All clan data has been saved successfully.",
-    });
+  const handleSaveAllClans = async () => {
+    try {
+      setIsSaving(true);
+      await clanDataService.saveClans(clans);
+      toast({
+        title: "All Clans Saved",
+        description: "All clan data has been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving clans:', error);
+      toast({
+        title: "Error Saving Clans",
+        description: "Failed to save clans to database.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddClan = () => {
@@ -210,8 +278,16 @@ const AdminPanel = () => {
                     placeholder="Enter website title"
                     className="text-lg"
                   />
-                  <Button onClick={handleSaveTitle} className="bg-[#1a237e] hover:bg-[#1a237e]/90">
-                    <Save className="h-4 w-4 mr-2" />
+                  <Button 
+                    onClick={handleSaveTitle} 
+                    className="bg-[#1a237e] hover:bg-[#1a237e]/90"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
                     Save Title
                   </Button>
                 </div>
@@ -221,8 +297,16 @@ const AdminPanel = () => {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Manage Clans</h3>
                   <div className="flex space-x-2">
-                    <Button onClick={handleSaveAllClans} className="bg-green-600 hover:bg-green-600/90">
-                      <Save className="h-4 w-4 mr-2" />
+                    <Button 
+                      onClick={handleSaveAllClans} 
+                      className="bg-green-600 hover:bg-green-600/90"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
                       Save All
                     </Button>
                     <Button onClick={handleAddClan} className="bg-[#ff6f00] hover:bg-[#ff6f00]/90">
@@ -276,8 +360,13 @@ const AdminPanel = () => {
                           onClick={() => handleSaveClan(selectedClan)}
                           className="bg-[#1a237e] hover:bg-[#1a237e]/90"
                           size="sm"
+                          disabled={isSaving}
                         >
-                          <Save className="h-4 w-4 mr-2" />
+                          {isSaving ? (
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4 mr-2" />
+                          )}
                           Save Clan
                         </Button>
                       </div>

@@ -33,7 +33,7 @@ interface ClanMember {
 }
 
 interface ClanApiResponse {
-  memberList: ClanMember[];
+  memberList?: ClanMember[];
 }
 
 const fetchClanMembers = async (clanTag: string): Promise<ClanMember[]> => {
@@ -44,12 +44,16 @@ const fetchClanMembers = async (clanTag: string): Promise<ClanMember[]> => {
   const url = `https://api.clashk.ing/clan/${cleanTag}/basic`;
   
   try {
+    console.log(`Fetching clan data from: ${url}`);
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch clan data: ${response.status}`);
     }
     
     const data: ClanApiResponse = await response.json();
+    console.log('API response for clan', cleanTag, ':', data);
+    
+    // Handle case where memberList might be null or undefined
     return data.memberList || [];
   } catch (error) {
     console.error('Error fetching clan members:', error);
