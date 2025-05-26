@@ -128,26 +128,26 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
             const hasError = query.error;
 
             return (
-              <AccordionItem key={clan.id} value={clan.id} className="border-2 border-slate-200 rounded-lg mb-4">
-                <AccordionTrigger className="bg-[#1a237e] text-white px-6 py-4 rounded-t-lg hover:no-underline">
+              <AccordionItem key={clan.id} value={clan.id} className="border-2 border-gray-200 rounded-xl mb-4 overflow-hidden shadow-sm">
+                <AccordionTrigger className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-4 hover:no-underline hover:from-blue-600 hover:to-indigo-600 transition-all">
                   <div className="flex items-center justify-between w-full mr-4">
                     <div className="flex items-center space-x-3">
-                      <CheckCircle className="h-5 w-5 text-[#ff6f00]" />
+                      <CheckCircle className="h-5 w-5 text-orange-300" />
                       <span className="font-semibold text-lg">{clan.name}</span>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2 text-blue-200">
+                      <div className="flex items-center space-x-2 text-blue-100">
                         <Hash className="h-4 w-4" />
                         <span className="font-mono">{clan.tag}</span>
                       </div>
                       {hasError && <AlertCircle className="h-5 w-5 text-red-300" />}
                       {query.isLoading || isRefreshing ? (
-                        <Badge variant="secondary" className="bg-yellow-500 text-white">
+                        <Badge variant="secondary" className="bg-yellow-500 text-white border-0">
                           <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
                           Loading...
                         </Badge>
                       ) : hasError ? (
-                        <Badge variant="secondary" className="bg-red-500 text-white">
+                        <Badge variant="secondary" className="bg-red-500 text-white border-0">
                           Error
                         </Badge>
                       ) : null}
@@ -158,14 +158,14 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                         }}
                         disabled={query.isLoading || isRefreshing || !clan.tag}
                         size="sm"
-                        className="bg-white/20 text-white hover:bg-white/30 border-white/30"
+                        className="bg-white/20 text-white hover:bg-white/30 border border-white/30 shadow-sm"
                       >
                         <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                       </Button>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="p-0">
+                <AccordionContent className="p-0 bg-white">
                   {hasError ? (
                     <div className="p-6 text-center">
                       <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -186,12 +186,12 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                       No players in this clan's roster
                     </div>
                   ) : (
-                    <div className="divide-y divide-slate-200">
+                    <div className="divide-y divide-gray-100">
                       {clan.players.map((player, playerIndex) => {
                         const isInClan = checkPlayerInClan(player.tag, clanMembers);
                         
                         return (
-                          <div key={playerIndex} className="p-4 hover:bg-slate-50 transition-colors">
+                          <div key={playerIndex} className="p-4 hover:bg-gray-50 transition-colors">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 {isInClan ? (
@@ -206,7 +206,7 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                               </div>
                               <Badge 
                                 variant={isInClan ? "default" : "destructive"}
-                                className={isInClan ? "bg-green-500" : ""}
+                                className={isInClan ? "bg-green-500 hover:bg-green-600" : ""}
                               >
                                 {isInClan ? "In Clan" : "Not Found"}
                               </Badge>

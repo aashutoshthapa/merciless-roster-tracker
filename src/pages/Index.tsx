@@ -21,9 +21,9 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
-        <div className="text-center text-white">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center text-gray-700">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
           <p>Loading CWL Tracker...</p>
         </div>
       </div>
@@ -32,13 +32,13 @@ const Index = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
-        <div className="text-center text-white">
-          <p className="text-red-400 mb-4">Error loading data</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center text-gray-700">
+          <p className="text-red-500 mb-4">Error loading data</p>
           <Button 
             onClick={() => window.location.reload()} 
             variant="outline" 
-            className="border-white text-white hover:bg-white hover:text-slate-900"
+            className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
           >
             Retry
           </Button>
@@ -48,22 +48,22 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header */}
-      <header className="bg-[#1a237e] shadow-2xl border-b-4 border-[#ff6f00]">
+      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg border-b-4 border-orange-400">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Shield className="h-10 w-10 text-[#ff6f00]" />
+              <Shield className="h-10 w-10 text-orange-400" />
               <div>
                 <h1 className="text-3xl font-bold text-white">
                   {appData?.title || 'MERCILESS CWL TRACKER'}
                 </h1>
-                <p className="text-blue-200">Clash of Clans War League Management</p>
+                <p className="text-blue-100">Clash of Clans War League Management</p>
               </div>
             </div>
             <Link to="/admin">
-              <Button variant="outline" className="border-[#ff6f00] text-[#ff6f00] hover:bg-[#ff6f00] hover:text-white">
+              <Button variant="outline" className="border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-white bg-white/10 backdrop-blur-sm">
                 Admin Panel
               </Button>
             </Link>
@@ -73,24 +73,24 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border-0">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-0 rounded-2xl">
           <CardHeader>
             <div className="flex items-center space-x-2 mb-4">
-              <Users className="h-6 w-6 text-[#ff6f00]" />
-              <CardTitle className="text-2xl text-[#1a237e]">CWL Management Dashboard</CardTitle>
+              <Users className="h-6 w-6 text-orange-500" />
+              <CardTitle className="text-2xl text-gray-800">CWL Management Dashboard</CardTitle>
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-slate-100">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-xl">
                 <TabsTrigger 
                   value="roster" 
-                  className="data-[state=active]:bg-[#1a237e] data-[state=active]:text-white"
+                  className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg"
                 >
                   CWL Roster
                 </TabsTrigger>
                 <TabsTrigger 
                   value="check" 
-                  className="data-[state=active]:bg-[#ff6f00] data-[state=active]:text-white"
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white rounded-lg"
                 >
                   Clan Check
                 </TabsTrigger>
