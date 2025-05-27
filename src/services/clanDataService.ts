@@ -1,12 +1,12 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-interface Player {
+export interface Player {
   name: string;
   tag: string;
 }
 
-interface Clan {
+export interface Clan {
   id: string;
   name: string;
   tag: string;

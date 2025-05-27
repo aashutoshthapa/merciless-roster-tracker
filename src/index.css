@@ -14,16 +14,16 @@
     --popover: 255 255 255;
     --popover-foreground: 38 50 56;
 
-    --primary: 33 150 243; /* #2196F3 - Vibrant blue */
+    --primary: 255 111 0; /* #FF6F00 - Orange */
     --primary-foreground: 255 255 255;
 
-    --secondary: 13 71 161; /* #0D47A1 - Dark blue */
+    --secondary: 26 35 126; /* #1A237E - Dark blue */
     --secondary-foreground: 255 255 255;
 
     --muted: 245 245 245; /* Light gray for hover */
     --muted-foreground: 97 97 97; /* Secondary text */
 
-    --accent: 33 150 243; /* #2196F3 - Vibrant blue */
+    --accent: 255 111 0; /* #FF6F00 - Orange */
     --accent-foreground: 255 255 255;
 
     --destructive: 244 67 54; /* #F44336 - Red */
@@ -31,18 +31,18 @@
 
     --border: 224 224 224; /* Light gray borders */
     --input: 224 224 224;
-    --ring: 33 150 243; /* Blue focus ring */
+    --ring: 255 111 0; /* Orange focus ring */
 
     --radius: 0.5rem;
 
     --sidebar-background: 255 255 255;
     --sidebar-foreground: 38 50 56;
-    --sidebar-primary: 13 71 161;
+    --sidebar-primary: 255 111 0;
     --sidebar-primary-foreground: 255 255 255;
     --sidebar-accent: 240 248 255;
     --sidebar-accent-foreground: 38 50 56;
     --sidebar-border: 224 224 224;
-    --sidebar-ring: 33 150 243;
+    --sidebar-ring: 255 111 0;
   }
 
   .dark {
@@ -55,8 +55,8 @@
     --popover: 30 41 59;
     --popover-foreground: 248 250 252;
 
-    --primary: 33 150 243; /* Keep vibrant blue in dark mode */
-    --primary-foreground: 15 23 42;
+    --primary: 255 111 0; /* Keep orange in dark mode */
+    --primary-foreground: 255 255 255;
 
     --secondary: 51 65 85; /* slate-600 */
     --secondary-foreground: 248 250 252;
@@ -64,24 +64,24 @@
     --muted: 51 65 85;
     --muted-foreground: 148 163 184; /* slate-400 */
 
-    --accent: 33 150 243;
-    --accent-foreground: 15 23 42;
+    --accent: 255 111 0;
+    --accent-foreground: 255 255 255;
 
     --destructive: 239 68 68; /* red-500 */
     --destructive-foreground: 248 250 252;
 
     --border: 51 65 85;
     --input: 51 65 85;
-    --ring: 33 150 243;
+    --ring: 255 111 0;
 
     --sidebar-background: 15 23 42;
     --sidebar-foreground: 248 250 252;
-    --sidebar-primary: 33 150 243;
-    --sidebar-primary-foreground: 15 23 42;
+    --sidebar-primary: 255 111 0;
+    --sidebar-primary-foreground: 255 255 255;
     --sidebar-accent: 30 41 59;
     --sidebar-accent-foreground: 248 250 252;
     --sidebar-border: 51 65 85;
-    --sidebar-ring: 33 150 243;
+    --sidebar-ring: 255 111 0;
   }
 }
 
