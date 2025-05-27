@@ -2,11 +2,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Users, Hash } from 'lucide-react';
+import { Users, Hash, MessageCircle } from 'lucide-react';
 
 interface Player {
   name: string;
   tag: string;
+  discordUsername: string;
 }
 
 interface Clan {
@@ -60,10 +61,24 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                     {clan.players.map((player, index) => (
                       <div key={index} className="p-4 hover:bg-slate-50 transition-colors">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-gray-900">{player.name}</span>
-                          <span className="font-mono text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded">
-                            {player.tag}
-                          </span>
+                          <div className="space-y-1">
+                            <span className="font-medium text-gray-900 block">{player.name}</span>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <div className="flex items-center space-x-1">
+                                <Hash className="h-3 w-3" />
+                                <span className="font-mono">{player.tag}</span>
+                              </div>
+                              {player.discordUsername && (
+                                <div className="flex items-center space-x-1">
+                                  <MessageCircle className="h-3 w-3" />
+                                  <span>@{player.discordUsername}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="bg-gray-100">
+                            Player
+                          </Badge>
                         </div>
                       </div>
                     ))}

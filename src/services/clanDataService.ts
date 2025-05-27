@@ -1,9 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Player {
   name: string;
   tag: string;
+  discordUsername: string;
 }
 
 export interface Clan {

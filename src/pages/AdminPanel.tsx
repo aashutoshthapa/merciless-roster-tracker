@@ -1,299 +1,185 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, LogOut, Plus, Trash2, Save, RefreshCw } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { Shield, Users, Trash2, Plus, ArrowLeft, Save } from 'lucide-react';
 import { AdminLogin } from '@/components/AdminLogin';
-import { clanDataService, type Clan, type Player } from '@/services/clanDataService';
-
-interface Player {
-  name: string;
-  tag: string;
-}
-
-interface Clan {
-  id: string;
-  name: string;
-  tag: string;
-  players: Player[];
-}
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { toast } from '@/hooks/use-toast';
+import { clanDataService, type Player, type Clan } from '@/services/clanDataService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AdminPanel = () => {
-  const { isAuthenticated, logout } = useAuth();
-  const [title, setTitle] = useState('');
-  const [clans, setClans] = useState<Clan[]>([]);
-  const [selectedClan, setSelectedClan] = useState<string>('');
-  const [bulkInput, setBulkInput] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const queryClient = useQueryClient();
+  
+  const [newTitle, setNewTitle] = useState('');
+  const [newClanName, setNewClanName] = useState('');
+  const [newClanTag, setNewClanTag] = useState('');
+  const [editingClan, setEditingClan] = useState<Clan | null>(null);
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [newPlayerTag, setNewPlayerTag] = useState('');
+  const [newPlayerDiscord, setNewPlayerDiscord] = useState('');
+
+  const { data: appData, isLoading, error } = useQuery({
+    queryKey: ['app-data'],
+    queryFn: () => clanDataService.getClanData(),
+  });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadData();
+    if (appData) {
+      setNewTitle(appData.title);
     }
-  }, [isAuthenticated]);
+  }, [appData]);
 
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-      console.log('Loading data from Supabase...');
-      const data = await clanDataService.getClanData();
-      setTitle(data.title);
-      setClans(data.clans);
-      if (data.clans.length > 0) {
-        setSelectedClan(data.clans[0].id);
-      }
-      console.log('Data loaded successfully:', data);
-    } catch (error) {
-      console.error('Error loading data:', error);
+  const saveTitleMutation = useMutation(clanDataService.saveTitle, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['app-data']);
       toast({
-        title: "Error Loading Data",
-        description: "Failed to load data from database.",
+        title: "Title Saved",
+        description: "Application title has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error Saving Title",
+        description: error.message || "Failed to save title. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const saveClansMutation = useMutation(clanDataService.saveClans, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['app-data']);
+      toast({
+        title: "Clans Saved",
+        description: "Clans have been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error Saving Clans",
+        description: error.message || "Failed to save clans. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleTitleSave = () => {
+    saveTitleMutation.mutate(newTitle);
   };
 
-  if (!isAuthenticated) {
+  const addClan = () => {
+    if (!newClanName.trim() || !newClanTag.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in both clan name and tag.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newClan: Clan = {
+      id: Date.now().toString(),
+      name: newClanName.trim(),
+      tag: newClanTag.trim(),
+      players: [],
+    };
+
+    const updatedClans = [...(appData?.clans || []), newClan];
+    saveClansMutation.mutate(updatedClans);
+    setNewClanName('');
+    setNewClanTag('');
+  };
+
+  const deleteClan = (clanId: string) => {
+    const updatedClans = (appData?.clans || []).filter(clan => clan.id !== clanId);
+    saveClansMutation.mutate(updatedClans);
+  };
+
+  const removePlayerFromClan = (clanId: string, playerIndex: number) => {
+    const updatedClans = (appData?.clans || []).map(clan => {
+      if (clan.id === clanId) {
+        const updatedPlayers = [...clan.players];
+        updatedPlayers.splice(playerIndex, 1);
+        return { ...clan, players: updatedPlayers };
+      }
+      return clan;
+    });
+
+    saveClansMutation.mutate(updatedClans);
+  };
+
+  const addPlayerToClan = (clanId: string) => {
+    if (!newPlayerName.trim() || !newPlayerTag.trim() || !newPlayerDiscord.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in player name, tag, and Discord username.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updatedClans = (appData?.clans || []).map(clan => {
+      if (clan.id === clanId) {
+        return {
+          ...clan,
+          players: [...clan.players, { 
+            name: newPlayerName.trim(), 
+            tag: newPlayerTag.trim(),
+            discordUsername: newPlayerDiscord.trim()
+          }]
+        };
+      }
+      return clan;
+    });
+
+    saveClansMutation.mutate(updatedClans);
+    setNewPlayerName('');
+    setNewPlayerTag('');
+    setNewPlayerDiscord('');
+  };
+
+  if (!user) {
     return <AdminLogin />;
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
-        <div className="text-center text-white">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Loading admin panel...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleSaveTitle = async () => {
-    try {
-      setIsSaving(true);
-      await clanDataService.saveTitle(title);
-      toast({
-        title: "Title Updated",
-        description: "Website title has been saved successfully.",
-      });
-    } catch (error) {
-      console.error('Error saving title:', error);
-      toast({
-        title: "Error Saving Title",
-        description: "Failed to save title to database.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSaveClan = async (clanId: string) => {
-    try {
-      setIsSaving(true);
-      await clanDataService.saveClans(clans);
-      toast({
-        title: "Clan Saved",
-        description: "Clan data has been saved successfully.",
-      });
-    } catch (error) {
-      console.error('Error saving clan:', error);
-      toast({
-        title: "Error Saving Clan",
-        description: "Failed to save clan to database.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSaveAllClans = async () => {
-    try {
-      setIsSaving(true);
-      await clanDataService.saveClans(clans);
-      toast({
-        title: "All Clans Saved",
-        description: "All clan data has been saved successfully.",
-      });
-      // Reload data to ensure UI is in sync
-      await loadData();
-    } catch (error) {
-      console.error('Error saving clans:', error);
-      toast({
-        title: "Error Saving Clans",
-        description: "Failed to save clans to database.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleAddClan = async () => {
-    const newClan: Clan = {
-      id: Date.now().toString(),
-      name: `New Clan ${clans.length + 1}`,
-      tag: '',
-      players: []
-    };
-    const updatedClans = [...clans, newClan];
-    setClans(updatedClans);
-    setSelectedClan(newClan.id);
-    
-    // Auto-save new clan
-    try {
-      await clanDataService.saveClans(updatedClans);
-      toast({
-        title: "Clan Added",
-        description: "New clan has been created and saved.",
-      });
-    } catch (error) {
-      console.error('Error saving new clan:', error);
-      toast({
-        title: "Error Adding Clan",
-        description: "Failed to save new clan.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteClan = async (clanId: string) => {
-    const updatedClans = clans.filter(c => c.id !== clanId);
-    setClans(updatedClans);
-    if (selectedClan === clanId && updatedClans.length > 0) {
-      setSelectedClan(updatedClans[0].id);
-    }
-    
-    // Auto-save after deletion
-    try {
-      await clanDataService.saveClans(updatedClans);
-      toast({
-        title: "Clan Deleted",
-        description: "Clan has been removed and changes saved.",
-      });
-    } catch (error) {
-      console.error('Error deleting clan:', error);
-      toast({
-        title: "Error Deleting Clan",
-        description: "Failed to save changes.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateClan = (clanId: string, updates: Partial<Clan>) => {
-    setClans(clans.map(c => c.id === clanId ? { ...c, ...updates } : c));
-  };
-
-  const handleAddPlayer = (clanId: string) => {
-    const clan = clans.find(c => c.id === clanId);
-    if (clan) {
-      const newPlayer: Player = { name: '', tag: '' };
-      handleUpdateClan(clanId, {
-        players: [...clan.players, newPlayer]
-      });
-    }
-  };
-
-  const handleDeletePlayer = (clanId: string, playerIndex: number) => {
-    const clan = clans.find(c => c.id === clanId);
-    if (clan) {
-      const newPlayers = clan.players.filter((_, index) => index !== playerIndex);
-      handleUpdateClan(clanId, { players: newPlayers });
-    }
-  };
-
-  const handleUpdatePlayer = (clanId: string, playerIndex: number, updates: Partial<Player>) => {
-    const clan = clans.find(c => c.id === clanId);
-    if (clan) {
-      const newPlayers = clan.players.map((player, index) => 
-        index === playerIndex ? { ...player, ...updates } : player
-      );
-      handleUpdateClan(clanId, { players: newPlayers });
-    }
-  };
-
-  const handleBulkImport = async () => {
-    if (!selectedClan || !bulkInput.trim()) return;
-
-    const lines = bulkInput.trim().split('\n');
-    const newPlayers: Player[] = [];
-
-    lines.forEach(line => {
-      const parts = line.split('\t').map(part => part.trim());
-      if (parts.length >= 2) {
-        newPlayers.push({
-          name: parts[0],
-          tag: parts[1].startsWith('#') ? parts[1] : `#${parts[1]}`
-        });
-      }
-    });
-
-    const clan = clans.find(c => c.id === selectedClan);
-    if (clan) {
-      const updatedClans = clans.map(c => 
-        c.id === selectedClan 
-          ? { ...c, players: [...c.players, ...newPlayers] }
-          : c
-      );
-      
-      setClans(updatedClans);
-      setBulkInput('');
-      
-      // Auto-save after bulk import
-      try {
-        await clanDataService.saveClans(updatedClans);
-        toast({
-          title: "Players Imported",
-          description: `Successfully imported ${newPlayers.length} players and saved to database.`,
-        });
-      } catch (error) {
-        console.error('Error saving bulk import:', error);
-        toast({
-          title: "Import Error",
-          description: "Players imported but failed to save to database.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const selectedClanData = clans.find(c => c.id === selectedClan);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-      <header className="bg-[#1a237e] shadow-2xl border-b-4 border-[#ff6f00]">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-card shadow-lg border-b-4 border-primary">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Shield className="h-10 w-10 text-[#ff6f00]" />
-              <div>
-                <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
-                <p className="text-blue-200">CWL Tracker Management</p>
+              <Button
+                onClick={() => navigate('/')}
+                variant="outline"
+                size="sm"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Button>
+              <div className="flex items-center space-x-3">
+                <Shield className="h-8 w-8 text-primary" />
+                <h1 className="text-2xl font-bold text-secondary">Admin Panel</h1>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/">
-                <Button variant="outline" className="border-blue-300 text-blue-300 hover:bg-blue-300 hover:text-[#1a237e]">
-                  Back to Tracker
-                </Button>
-              </Link>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
               <Button 
                 onClick={logout}
-                variant="outline" 
-                className="border-red-400 text-red-400 hover:bg-red-400 hover:text-white"
+                variant="outline"
+                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
               >
-                <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
             </div>
@@ -301,240 +187,193 @@ const AdminPanel = () => {
         </div>
       </header>
 
+      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border-0">
-          <CardHeader>
-            <CardTitle className="text-2xl text-[#1a237e]">Management Dashboard</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="settings" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-slate-100">
-                <TabsTrigger value="settings" className="data-[state=active]:bg-[#1a237e] data-[state=active]:text-white">
-                  Settings
-                </TabsTrigger>
-                <TabsTrigger value="clans" className="data-[state=active]:bg-[#ff6f00] data-[state=active]:text-white">
-                  Manage Clans
-                </TabsTrigger>
-                <TabsTrigger value="bulk" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
-                  Bulk Import
-                </TabsTrigger>
-              </TabsList>
+        <Tabs defaultValue="settings" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="settings">App Settings</TabsTrigger>
+            <TabsTrigger value="clans">Manage Clans</TabsTrigger>
+          </TabsList>
 
-              <TabsContent value="settings" className="space-y-6">
-                <div className="space-y-4">
-                  <Label htmlFor="title" className="text-lg font-semibold">Website Title</Label>
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Enter website title"
-                    className="text-lg"
-                  />
-                  <Button 
-                    onClick={handleSaveTitle} 
-                    className="bg-[#1a237e] hover:bg-[#1a237e]/90"
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    Save Title
-                  </Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="clans" className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Manage Clans</h3>
-                  <div className="flex space-x-2">
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <span>Application Settings</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="title">Application Title</Label>
+                  <div className="flex space-x-2 mt-2">
+                    <Input
+                      id="title"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      placeholder={appData?.title || 'Enter title'}
+                      className="flex-1"
+                    />
                     <Button 
-                      onClick={handleSaveAllClans} 
-                      className="bg-green-600 hover:bg-green-600/90"
-                      disabled={isSaving}
+                      onClick={handleTitleSave}
+                      disabled={!newTitle.trim() || saveTitleMutation.isPending}
+                      className="bg-primary hover:bg-primary/90"
                     >
-                      {isSaving ? (
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4 mr-2" />
-                      )}
-                      Save All
-                    </Button>
-                    <Button onClick={handleAddClan} className="bg-[#ff6f00] hover:bg-[#ff6f00]/90">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Clan
+                      <Save className="h-4 w-4 mr-2" />
+                      {saveTitleMutation.isPending ? 'Saving...' : 'Save'}
                     </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Clan List */}
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">Clans</h4>
-                    {clans.map((clan) => (
-                      <Card 
-                        key={clan.id} 
-                        className={`cursor-pointer transition-all ${
-                          selectedClan === clan.id ? 'ring-2 ring-[#ff6f00]' : ''
-                        }`}
-                        onClick={() => setSelectedClan(clan.id)}
+          <TabsContent value="clans">
+            <div className="space-y-6">
+              {/* Add New Clan */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add New Clan</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="clanName">Clan Name</Label>
+                      <Input
+                        id="clanName"
+                        value={newClanName}
+                        onChange={(e) => setNewClanName(e.target.value)}
+                        placeholder="Enter clan name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="clanTag">Clan Tag</Label>
+                      <Input
+                        id="clanTag"
+                        value={newClanTag}
+                        onChange={(e) => setNewClanTag(e.target.value)}
+                        placeholder="#CLANTAGX"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        onClick={addClan}
+                        disabled={!newClanName.trim() || !newClanTag.trim() || saveClansMutation.isPending}
+                        className="w-full bg-primary hover:bg-primary/90"
                       >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-semibold">{clan.name}</p>
-                              <p className="text-sm text-gray-600">{clan.tag}</p>
-                              <p className="text-xs text-gray-500">{clan.players.length} players</p>
-                            </div>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClan(clan.id);
-                              }}
-                              variant="destructive"
-                              size="sm"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Clan
+                      </Button>
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Clan Editor */}
-                  {selectedClanData && (
-                    <div className="space-y-4">
+              {/* Existing Clans */}
+              <div className="space-y-4">
+                {(appData?.clans || []).map((clan) => (
+                  <Card key={clan.id}>
+                    <CardHeader>
                       <div className="flex items-center justify-between">
-                        <h4 className="font-semibold">Edit Clan: {selectedClanData.name}</h4>
-                        <Button 
-                          onClick={() => handleSaveClan(selectedClan)}
-                          className="bg-[#1a237e] hover:bg-[#1a237e]/90"
-                          size="sm"
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Save className="h-4 w-4 mr-2" />
-                          )}
-                          Save Clan
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="clan-name">Clan Name</Label>
-                          <Input
-                            id="clan-name"
-                            value={selectedClanData.name}
-                            onChange={(e) => handleUpdateClan(selectedClan, { name: e.target.value })}
-                          />
+                        <div className="flex items-center space-x-3">
+                          <Users className="h-5 w-5 text-primary" />
+                          <div>
+                            <CardTitle className="text-lg">{clan.name}</CardTitle>
+                            <p className="text-sm text-muted-foreground font-mono">{clan.tag}</p>
+                          </div>
                         </div>
-                        <div>
-                          <Label htmlFor="clan-tag">Clan Tag</Label>
-                          <Input
-                            id="clan-tag"
-                            value={selectedClanData.tag}
-                            onChange={(e) => handleUpdateClan(selectedClan, { tag: e.target.value })}
-                            placeholder="#CLANTAGHERE"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h5 className="font-semibold">Players ({selectedClanData.players.length})</h5>
-                          <Button 
-                            onClick={() => handleAddPlayer(selectedClan)}
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">
+                            {clan.players.length} players
+                          </Badge>
+                          <Button
+                            onClick={() => deleteClan(clan.id)}
+                            variant="outline"
                             size="sm"
-                            className="bg-[#ff6f00] hover:bg-[#ff6f00]/90"
+                            className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                           >
-                            <Plus className="h-4 w-4 mr-1" />
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Add Player Form */}
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-muted rounded-lg">
+                        <div>
+                          <Label htmlFor={`playerName-${clan.id}`}>Player Name</Label>
+                          <Input
+                            id={`playerName-${clan.id}`}
+                            value={newPlayerName}
+                            onChange={(e) => setNewPlayerName(e.target.value)}
+                            placeholder="Player name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`playerTag-${clan.id}`}>Player Tag</Label>
+                          <Input
+                            id={`playerTag-${clan.id}`}
+                            value={newPlayerTag}
+                            onChange={(e) => setNewPlayerTag(e.target.value)}
+                            placeholder="#PLAYERX"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`playerDiscord-${clan.id}`}>Discord Username</Label>
+                          <Input
+                            id={`playerDiscord-${clan.id}`}
+                            value={newPlayerDiscord}
+                            onChange={(e) => setNewPlayerDiscord(e.target.value)}
+                            placeholder="discord_username"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button 
+                            onClick={() => addPlayerToClan(clan.id)}
+                            disabled={saveClansMutation.isPending}
+                            size="sm"
+                            className="w-full bg-primary hover:bg-primary/90"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
                             Add Player
                           </Button>
                         </div>
-
-                        <div className="max-h-64 overflow-y-auto space-y-2">
-                          {selectedClanData.players.map((player, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                              <Input
-                                placeholder="Player Name"
-                                value={player.name}
-                                onChange={(e) => handleUpdatePlayer(selectedClan, index, { name: e.target.value })}
-                                className="flex-1"
-                              />
-                              <Input
-                                placeholder="#TAG"
-                                value={player.tag}
-                                onChange={(e) => handleUpdatePlayer(selectedClan, index, { tag: e.target.value })}
-                                className="w-32"
-                              />
-                              <Button
-                                onClick={() => handleDeletePlayer(selectedClan, index)}
-                                variant="destructive"
-                                size="sm"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
 
-              <TabsContent value="bulk" className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Bulk Import Players</h3>
-                  <p className="text-sm text-gray-600">
-                    Paste Excel-formatted data (tab-separated): Name [TAB] Tag
-                  </p>
-                  
-                  <div className="space-y-3">
-                    <Label htmlFor="clan-select">Select Clan</Label>
-                    <select
-                      id="clan-select"
-                      value={selectedClan}
-                      onChange={(e) => setSelectedClan(e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                    >
-                      {clans.map((clan) => (
-                        <option key={clan.id} value={clan.id}>
-                          {clan.name} ({clan.tag})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label htmlFor="bulk-input">Player Data</Label>
-                    <Textarea
-                      id="bulk-input"
-                      value={bulkInput}
-                      onChange={(e) => setBulkInput(e.target.value)}
-                      placeholder="Mercurial	#L08YQV88C&#10;mercurial	#QJP2LVC2C"
-                      rows={8}
-                      className="font-mono"
-                    />
-                  </div>
-
-                  <Button 
-                    onClick={handleBulkImport}
-                    className="bg-green-600 hover:bg-green-600/90"
-                    disabled={!selectedClan || !bulkInput.trim()}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Import Players (Auto-Save)
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+                      {/* Players List */}
+                      {clan.players.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4">No players added yet</p>
+                      ) : (
+                        <div className="space-y-2">
+                          <h4 className="font-semibold">Players:</h4>
+                          <div className="grid gap-2">
+                            {clan.players.map((player, index) => (
+                              <div key={index} className="flex items-center justify-between p-3 bg-card border rounded">
+                                <div className="flex items-center space-x-4">
+                                  <span className="font-medium">{player.name}</span>
+                                  <span className="font-mono text-sm text-muted-foreground">{player.tag}</span>
+                                  <Badge variant="outline">@{player.discordUsername}</Badge>
+                                </div>
+                                <Button
+                                  onClick={() => removePlayerFromClan(clan.id, index)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

@@ -4,15 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Shield, Users, RefreshCw } from 'lucide-react';
+import { Shield, Users, RefreshCw, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ClanRoster } from '@/components/ClanRoster';
 import { ClanCheck } from '@/components/ClanCheck';
+import { PlayerSearch } from '@/components/PlayerSearch';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { clanDataService } from '@/services/clanDataService';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('roster');
+  const [activeTab, setActiveTab] = useState('search');
 
   const { data: appData, isLoading, error } = useQuery({
     queryKey: ['app-data'],
@@ -88,7 +89,14 @@ const Index = () => {
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-muted rounded-xl">
+              <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
+                <TabsTrigger 
+                  value="search" 
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Find My Clan
+                </TabsTrigger>
                 <TabsTrigger 
                   value="roster" 
                   className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground rounded-lg font-medium"
@@ -102,6 +110,10 @@ const Index = () => {
                   Clan Check
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="search" className="mt-6">
+                <PlayerSearch clans={appData?.clans || []} />
+              </TabsContent>
 
               <TabsContent value="roster" className="mt-6">
                 <ClanRoster clans={appData?.clans || []} />
