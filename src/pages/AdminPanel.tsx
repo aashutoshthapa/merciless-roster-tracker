@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -5,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Users, Trash2, Plus, ArrowLeft, Save } from 'lucide-react';
@@ -39,9 +39,10 @@ const AdminPanel = () => {
     }
   }, [appData]);
 
-  const saveTitleMutation = useMutation(clanDataService.saveTitle, {
+  const saveTitleMutation = useMutation({
+    mutationFn: (title: string) => clanDataService.saveTitle(title),
     onSuccess: () => {
-      queryClient.invalidateQueries(['app-data']);
+      queryClient.invalidateQueries({ queryKey: ['app-data'] });
       toast({
         title: "Title Saved",
         description: "Application title has been updated.",
@@ -56,9 +57,10 @@ const AdminPanel = () => {
     },
   });
 
-  const saveClansMutation = useMutation(clanDataService.saveClans, {
+  const saveClansMutation = useMutation({
+    mutationFn: (clans: Clan[]) => clanDataService.saveClans(clans),
     onSuccess: () => {
-      queryClient.invalidateQueries(['app-data']);
+      queryClient.invalidateQueries({ queryKey: ['app-data'] });
       toast({
         title: "Clans Saved",
         description: "Clans have been updated.",
