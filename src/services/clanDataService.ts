@@ -1,19 +1,19 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export interface Player {
+interface Player {
   name: string;
   tag: string;
 }
 
-export interface Clan {
+interface Clan {
   id: string;
   name: string;
   tag: string;
   players: Player[];
 }
 
-export interface AppData {
+interface AppData {
   title: string;
   clans: Clan[];
 }
@@ -33,19 +33,14 @@ class ClanDataService {
       }
 
       if (!data || data.length === 0) {
-        console.log('No data found, returning default data');
-        return this.getDefaultData();
+        console.log('No data found, creating default entry');
+        return await this.createDefaultData();
       }
 
-      const appData = data[0];
-      console.log('Fetched data from Supabase:', appData);
-
-      // Type assertion with proper validation
-      const clansData = Array.isArray(appData.clans) ? appData.clans as Clan[] : [];
-      
+      const result = data[0];
       return {
-        title: appData.title || 'MERCILESS CWL TRACKER',
-        clans: clansData
+        title: result.title || 'MERCILESS CWL TRACKER',
+        clans: Array.isArray(result.clans) ? (result.clans as unknown as Clan[]) : [],
       };
     } catch (error) {
       console.error('Error in getClanData:', error);
@@ -53,67 +48,77 @@ class ClanDataService {
     }
   }
 
-  async saveClanData(appData: AppData): Promise<boolean> {
+  async saveTitle(title: string): Promise<void> {
     try {
-      console.log('Saving data to Supabase:', appData);
+      const currentData = await this.getClanData();
       
-      // First, try to get existing data
-      const { data: existingData, error: fetchError } = await supabase
+      const { error } = await supabase
         .from('clan_data')
-        .select('id')
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .upsert({
+          id: 1,
+          title,
+          clans: currentData.clans as unknown as any,
+        });
 
-      if (fetchError) {
-        console.error('Error fetching existing data:', fetchError);
+      if (error) {
+        console.error('Error saving title:', error);
+        throw error;
       }
-
-      let result;
-      
-      if (existingData && existingData.length > 0) {
-        // Update existing record
-        const { data, error } = await supabase
-          .from('clan_data')
-          .update({
-            title: appData.title,
-            clans: appData.clans,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingData[0].id)
-          .select();
-        
-        result = { data, error };
-      } else {
-        // Insert new record
-        const { data, error } = await supabase
-          .from('clan_data')
-          .insert({
-            title: appData.title,
-            clans: appData.clans
-          })
-          .select();
-        
-        result = { data, error };
-      }
-
-      if (result.error) {
-        console.error('Error saving clan data:', result.error);
-        return false;
-      }
-
-      console.log('Data saved successfully:', result.data);
-      return true;
     } catch (error) {
-      console.error('Error in saveClanData:', error);
-      return false;
+      console.error('Error in saveTitle:', error);
+      throw error;
+    }
+  }
+
+  async saveClans(clans: Clan[]): Promise<void> {
+    try {
+      const currentData = await this.getClanData();
+      
+      const { error } = await supabase
+        .from('clan_data')
+        .upsert({
+          id: 1,
+          title: currentData.title,
+          clans: clans as unknown as any,
+        });
+
+      if (error) {
+        console.error('Error saving clans:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error in saveClans:', error);
+      throw error;
     }
   }
 
   private getDefaultData(): AppData {
     return {
       title: 'MERCILESS CWL TRACKER',
-      clans: []
+      clans: [],
     };
+  }
+
+  private async createDefaultData(): Promise<AppData> {
+    const defaultData = this.getDefaultData();
+    
+    try {
+      const { error } = await supabase
+        .from('clan_data')
+        .insert({
+          id: 1,
+          title: defaultData.title,
+          clans: defaultData.clans as unknown as any,
+        });
+
+      if (error) {
+        console.error('Error creating default data:', error);
+      }
+    } catch (error) {
+      console.error('Error in createDefaultData:', error);
+    }
+
+    return defaultData;
   }
 }
 

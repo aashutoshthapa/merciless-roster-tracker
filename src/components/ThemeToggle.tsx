@@ -11,7 +11,7 @@ export const ThemeToggle = () => {
       onClick={toggleTheme}
       variant="outline"
       size="sm"
-      className="border-orange-400 text-orange-600 hover:bg-orange-50 dark:border-orange-500 dark:text-orange-400 dark:hover:bg-orange-900/20"
+      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:border-primary dark:text-primary dark:hover:bg-primary dark:hover:text-primary-foreground"
     >
       {isDarkMode ? (
         <Sun className="h-4 w-4" />

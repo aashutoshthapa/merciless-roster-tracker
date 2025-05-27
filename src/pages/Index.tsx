@@ -51,13 +51,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white dark:bg-slate-800 shadow-lg border-b-4 border-primary">
+      <header className="bg-card shadow-lg border-b-4 border-primary">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Shield className="h-10 w-10 text-primary" />
               <div>
-                <h1 className="text-3xl font-bold text-secondary dark:text-white">
+                <h1 className="text-3xl font-bold text-secondary">
                   {appData?.title || 'MERCILESS CWL TRACKER'}
                 </h1>
                 <p className="text-muted-foreground">Clash of Clans War League Management</p>
@@ -68,7 +68,7 @@ const Index = () => {
               <Link to="/admin">
                 <Button 
                   variant="outline" 
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-white/90 dark:bg-slate-700 backdrop-blur-sm"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 >
                   Admin Panel
                 </Button>
@@ -80,7 +80,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Card className="bg-white dark:bg-slate-800 shadow-xl border-border rounded-2xl">
+        <Card className="bg-card shadow-xl border-border rounded-2xl">
           <CardHeader>
             <div className="flex items-center space-x-2 mb-4">
               <Users className="h-6 w-6 text-primary" />

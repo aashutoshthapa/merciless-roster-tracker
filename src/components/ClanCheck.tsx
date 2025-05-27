@@ -157,7 +157,7 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                         disabled={query.isLoading || isRefreshing || !clan.tag}
                         size="sm"
                         variant="outline"
-                        className="bg-white/20 border-white/30 text-secondary-foreground hover:bg-white/30 shadow-sm"
+                        className="bg-primary/10 border-primary/30 text-secondary-foreground hover:bg-primary/20 shadow-sm"
                       >
                         <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                       </Button>
