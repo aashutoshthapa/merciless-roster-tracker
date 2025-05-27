@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,12 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Users, Trash2, Plus, ArrowLeft, Save } from 'lucide-react';
+import { Shield, Users, Trash2, Plus, ArrowLeft, Save, Edit2, FileText } from 'lucide-react';
 import { AdminLogin } from '@/components/AdminLogin';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from '@/hooks/use-toast';
 import { clanDataService, type Player, type Clan } from '@/services/clanDataService';
 import { useAuth } from '@/contexts/AuthContext';
+import { Textarea } from '@/components/ui/textarea';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -27,6 +28,8 @@ const AdminPanel = () => {
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerTag, setNewPlayerTag] = useState('');
   const [newPlayerDiscord, setNewPlayerDiscord] = useState('');
+  const [editingPlayer, setEditingPlayer] = useState<{ clanId: string; playerIndex: number } | null>(null);
+  const [bulkImportText, setBulkImportText] = useState('');
 
   const { data: appData, isLoading, error } = useQuery({
     queryKey: ['app-data'],
@@ -148,6 +151,94 @@ const AdminPanel = () => {
     setNewPlayerName('');
     setNewPlayerTag('');
     setNewPlayerDiscord('');
+  };
+
+  const editPlayer = (clanId: string, playerIndex: number) => {
+    const clan = appData?.clans.find(c => c.id === clanId);
+    if (clan) {
+      const player = clan.players[playerIndex];
+      setNewPlayerName(player.name);
+      setNewPlayerTag(player.tag);
+      setNewPlayerDiscord(player.discordUsername);
+      setEditingPlayer({ clanId, playerIndex });
+    }
+  };
+
+  const savePlayerEdit = () => {
+    if (!editingPlayer || !newPlayerName.trim() || !newPlayerTag.trim() || !newPlayerDiscord.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all player details.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updatedClans = (appData?.clans || []).map(clan => {
+      if (clan.id === editingPlayer.clanId) {
+        const updatedPlayers = [...clan.players];
+        updatedPlayers[editingPlayer.playerIndex] = {
+          name: newPlayerName.trim(),
+          tag: newPlayerTag.trim(),
+          discordUsername: newPlayerDiscord.trim()
+        };
+        return { ...clan, players: updatedPlayers };
+      }
+      return clan;
+    });
+
+    saveClansMutation.mutate(updatedClans);
+    setEditingPlayer(null);
+    setNewPlayerName('');
+    setNewPlayerTag('');
+    setNewPlayerDiscord('');
+  };
+
+  const handleBulkImport = (clanId: string) => {
+    if (!bulkImportText.trim()) {
+      toast({
+        title: "No Data",
+        description: "Please paste player data to import.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const lines = bulkImportText.split('\n').filter(line => line.trim());
+    const newPlayers: Player[] = [];
+
+    for (const line of lines) {
+      const [name, tag, discord] = line.split('\t').map(s => s.trim());
+      if (name && tag && discord) {
+        newPlayers.push({ name, tag, discordUsername: discord });
+      }
+    }
+
+    if (newPlayers.length === 0) {
+      toast({
+        title: "Invalid Data",
+        description: "No valid player data found. Please check the format.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updatedClans = (appData?.clans || []).map(clan => {
+      if (clan.id === clanId) {
+        return {
+          ...clan,
+          players: [...clan.players, ...newPlayers]
+        };
+      }
+      return clan;
+    });
+
+    saveClansMutation.mutate(updatedClans);
+    setBulkImportText('');
+    toast({
+      title: "Import Successful",
+      description: `Added ${newPlayers.length} players to the clan.`,
+    });
   };
 
   if (!user) {
@@ -272,19 +363,26 @@ const AdminPanel = () => {
               </Card>
 
               {/* Existing Clans */}
-              <div className="space-y-4">
+              <Accordion type="multiple" className="w-full">
                 {(appData?.clans || []).map((clan) => (
-                  <Card key={clan.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
+                  <AccordionItem key={clan.id} value={clan.id} className="border-2 border-border rounded-xl mb-4 overflow-hidden shadow-sm bg-card">
+                    <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                      <div className="flex items-center justify-between w-full mr-4">
                         <div className="flex items-center space-x-3">
                           <Users className="h-5 w-5 text-primary" />
                           <div>
-                            <CardTitle className="text-lg">{clan.name}</CardTitle>
-                            <p className="text-sm text-muted-foreground font-mono">{clan.tag}</p>
+                            <span className="font-semibold text-lg">{clan.name}</span>
+                            <a 
+                              href={`https://link.clashofclans.com/en?action=OpenClanProfile&tag=%23${clan.tag.slice(1)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block text-sm text-muted-foreground font-mono hover:text-primary"
+                            >
+                              {clan.tag}
+                            </a>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-3">
                           <Badge variant="secondary">
                             {clan.players.length} players
                           </Badge>
@@ -298,81 +396,133 @@ const AdminPanel = () => {
                           </Button>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Add Player Form */}
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-muted rounded-lg">
-                        <div>
-                          <Label htmlFor={`playerName-${clan.id}`}>Player Name</Label>
-                          <Input
-                            id={`playerName-${clan.id}`}
-                            value={newPlayerName}
-                            onChange={(e) => setNewPlayerName(e.target.value)}
-                            placeholder="Player name"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`playerTag-${clan.id}`}>Player Tag</Label>
-                          <Input
-                            id={`playerTag-${clan.id}`}
-                            value={newPlayerTag}
-                            onChange={(e) => setNewPlayerTag(e.target.value)}
-                            placeholder="#PLAYERX"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`playerDiscord-${clan.id}`}>Discord Username</Label>
-                          <Input
-                            id={`playerDiscord-${clan.id}`}
-                            value={newPlayerDiscord}
-                            onChange={(e) => setNewPlayerDiscord(e.target.value)}
-                            placeholder="discord_username"
-                          />
-                        </div>
-                        <div className="flex items-end">
-                          <Button 
-                            onClick={() => addPlayerToClan(clan.id)}
-                            disabled={saveClansMutation.isPending}
-                            size="sm"
-                            className="w-full bg-primary hover:bg-primary/90"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Player
-                          </Button>
-                        </div>
-                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="p-6 space-y-6">
+                        {/* Bulk Import */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Bulk Import Players</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              <Textarea
+                                value={bulkImportText}
+                                onChange={(e) => setBulkImportText(e.target.value)}
+                                placeholder="Paste player data here (Name, Tag, Discord username separated by tabs)"
+                                className="h-32"
+                              />
+                              <Button
+                                onClick={() => handleBulkImport(clan.id)}
+                                className="w-full bg-primary hover:bg-primary/90"
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Import Players
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
 
-                      {/* Players List */}
-                      {clan.players.length === 0 ? (
-                        <p className="text-muted-foreground text-center py-4">No players added yet</p>
-                      ) : (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold">Players:</h4>
-                          <div className="grid gap-2">
-                            {clan.players.map((player, index) => (
-                              <div key={index} className="flex items-center justify-between p-3 bg-card border rounded">
-                                <div className="flex items-center space-x-4">
-                                  <span className="font-medium">{player.name}</span>
-                                  <span className="font-mono text-sm text-muted-foreground">{player.tag}</span>
-                                  <Badge variant="outline">@{player.discordUsername}</Badge>
-                                </div>
-                                <Button
-                                  onClick={() => removePlayerFromClan(clan.id, index)}
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
+                        {/* Add Player Form */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
+                          <div>
+                            <Label htmlFor={`playerName-${clan.id}`}>Player Name</Label>
+                            <Input
+                              id={`playerName-${clan.id}`}
+                              value={newPlayerName}
+                              onChange={(e) => setNewPlayerName(e.target.value)}
+                              placeholder="Player name"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`playerTag-${clan.id}`}>Player Tag</Label>
+                            <Input
+                              id={`playerTag-${clan.id}`}
+                              value={newPlayerTag}
+                              onChange={(e) => setNewPlayerTag(e.target.value)}
+                              placeholder="#PLAYERX"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`playerDiscord-${clan.id}`}>Discord Username</Label>
+                            <Input
+                              id={`playerDiscord-${clan.id}`}
+                              value={newPlayerDiscord}
+                              onChange={(e) => setNewPlayerDiscord(e.target.value)}
+                              placeholder="discord_username"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <Button 
+                              onClick={() => editingPlayer ? savePlayerEdit() : addPlayerToClan(clan.id)}
+                              disabled={saveClansMutation.isPending}
+                              size="sm"
+                              className="w-full bg-primary hover:bg-primary/90"
+                            >
+                              {editingPlayer ? (
+                                <>
+                                  <Save className="h-4 w-4 mr-2" />
+                                  Save Edit
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Player
+                                </>
+                              )}
+                            </Button>
                           </div>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+
+                        {/* Players List */}
+                        {clan.players.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-4">No players added yet</p>
+                        ) : (
+                          <div className="space-y-2">
+                            <h4 className="font-semibold">Players:</h4>
+                            <div className="grid gap-2">
+                              {clan.players.map((player, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-card border rounded">
+                                  <div className="flex items-center space-x-4">
+                                    <span className="font-medium">{player.name}</span>
+                                    <a 
+                                      href={`https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=%23${player.tag.slice(1)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="font-mono text-sm text-muted-foreground hover:text-primary"
+                                    >
+                                      {player.tag}
+                                    </a>
+                                    <Badge variant="outline">@{player.discordUsername}</Badge>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Button
+                                      onClick={() => editPlayer(clan.id, index)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                                    >
+                                      <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      onClick={() => removePlayerFromClan(clan.id, index)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
                 ))}
-              </div>
+              </Accordion>
             </div>
           </TabsContent>
         </Tabs>
