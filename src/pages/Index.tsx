@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +60,7 @@ const Index = () => {
                 <h1 className="text-3xl font-bold text-secondary">
                   {appData?.title || 'MERCILESS CWL TRACKER'}
                 </h1>
-                <p className="text-muted-foreground">Clash of Clans War League Management</p>
+                <p className="text-muted-foreground">CWL Management</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
