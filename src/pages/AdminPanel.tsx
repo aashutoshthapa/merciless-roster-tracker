@@ -372,14 +372,9 @@ const AdminPanel = () => {
                           <Users className="h-5 w-5 text-primary" />
                           <div>
                             <span className="font-semibold text-lg">{clan.name}</span>
-                            <a 
-                              href={`https://link.clashofclans.com/en?action=OpenClanProfile&tag=%23${clan.tag.slice(1)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block text-sm text-muted-foreground font-mono hover:text-primary"
-                            >
+                            <span className="block text-sm text-muted-foreground font-mono">
                               {clan.tag}
-                            </a>
+                            </span>
                           </div>
                         </div>
                         <div className="flex items-center space-x-3">

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -134,9 +133,16 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                         </div>
                         <div className="text-right">
                           <div className="flex items-center space-x-2 mb-2">
-                            <Badge className="bg-secondary text-secondary-foreground">
-                              {result.clanName}
-                            </Badge>
+                            <a 
+                              href={`https://link.clashofclans.com/en?action=OpenClanProfile&tag=%23${result.clanTag.slice(1)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-primary"
+                            >
+                              <Badge className="bg-secondary text-secondary-foreground">
+                                {result.clanName}
+                              </Badge>
+                            </a>
                           </div>
                           <p className="text-sm font-mono text-muted-foreground">{result.clanTag}</p>
                         </div>

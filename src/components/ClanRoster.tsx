@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -76,9 +75,6 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                               )}
                             </div>
                           </div>
-                          <Badge variant="outline" className="bg-gray-100">
-                            Player
-                          </Badge>
                         </div>
                       </div>
                     ))}
