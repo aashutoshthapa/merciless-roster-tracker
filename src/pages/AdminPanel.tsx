@@ -480,14 +480,9 @@ const AdminPanel = () => {
                                 <div key={index} className="flex items-center justify-between p-3 bg-card border rounded">
                                   <div className="flex items-center space-x-4">
                                     <span className="font-medium">{player.name}</span>
-                                    <a 
-                                      href={`https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=%23${player.tag.slice(1)}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="font-mono text-sm text-muted-foreground hover:text-primary"
-                                    >
+                                    <span className="font-mono text-sm text-muted-foreground">
                                       {player.tag}
-                                    </a>
+                                    </span>
                                     <Badge variant="outline">@{player.discordUsername}</Badge>
                                   </div>
                                   <div className="flex items-center space-x-2">
