@@ -1,48 +1,47 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 240 248 255; /* #F0F8FF - AliceBlue */
-    --foreground: 38 50 56; /* #263238 - Primary text */
+    --background: 244 249 255; /* #F4F9FF - very light sky blue */
+    --foreground: 30 30 30; /* #1E1E1E - dark gray text */
 
-    --card: 255 255 255; /* Pure white */
-    --card-foreground: 38 50 56; /* #263238 */
+    --card: 255 255 255; /* #FFFFFF - clean white */
+    --card-foreground: 30 30 30; /* #1E1E1E */
 
     --popover: 255 255 255;
-    --popover-foreground: 38 50 56;
+    --popover-foreground: 30 30 30;
 
-    --primary: 255 111 0; /* #FF6F00 - Orange */
+    --primary: 33 150 243; /* #2196F3 - light-medium blue */
     --primary-foreground: 255 255 255;
 
-    --secondary: 26 35 126; /* #1A237E - Dark blue */
+    --secondary: 21 101 192; /* #1565C0 - darker blue */
     --secondary-foreground: 255 255 255;
 
     --muted: 245 245 245; /* Light gray for hover */
     --muted-foreground: 97 97 97; /* Secondary text */
 
-    --accent: 255 111 0; /* #FF6F00 - Orange */
+    --accent: 33 150 243; /* #2196F3 - light-medium blue */
     --accent-foreground: 255 255 255;
 
-    --destructive: 244 67 54; /* #F44336 - Red */
+    --destructive: 244 67 54; /* #F44336 - Error red */
     --destructive-foreground: 255 255 255;
 
-    --border: 224 224 224; /* Light gray borders */
+    --border: 224 224 224; /* #E0E0E0 - soft gray */
     --input: 224 224 224;
-    --ring: 255 111 0; /* Orange focus ring */
+    --ring: 33 150 243; /* #2196F3 - light-medium blue */
 
     --radius: 0.5rem;
 
     --sidebar-background: 255 255 255;
-    --sidebar-foreground: 38 50 56;
-    --sidebar-primary: 255 111 0;
+    --sidebar-foreground: 30 30 30;
+    --sidebar-primary: 33 150 243;
     --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 240 248 255;
-    --sidebar-accent-foreground: 38 50 56;
+    --sidebar-accent: 244 249 255;
+    --sidebar-accent-foreground: 30 30 30;
     --sidebar-border: 224 224 224;
-    --sidebar-ring: 255 111 0;
+    --sidebar-ring: 33 150 243;
   }
 
   .dark {
@@ -55,33 +54,33 @@
     --popover: 30 41 59;
     --popover-foreground: 248 250 252;
 
-    --primary: 255 111 0; /* Keep orange in dark mode */
+    --primary: 33 150 243; /* #2196F3 - light-medium blue */
     --primary-foreground: 255 255 255;
 
-    --secondary: 51 65 85; /* slate-600 */
+    --secondary: 21 101 192; /* #1565C0 - darker blue */
     --secondary-foreground: 248 250 252;
 
     --muted: 51 65 85;
     --muted-foreground: 148 163 184; /* slate-400 */
 
-    --accent: 255 111 0;
+    --accent: 33 150 243; /* #2196F3 - light-medium blue */
     --accent-foreground: 255 255 255;
 
-    --destructive: 239 68 68; /* red-500 */
+    --destructive: 244 67 54; /* #F44336 - Error red */
     --destructive-foreground: 248 250 252;
 
     --border: 51 65 85;
     --input: 51 65 85;
-    --ring: 255 111 0;
+    --ring: 33 150 243; /* #2196F3 - light-medium blue */
 
     --sidebar-background: 15 23 42;
     --sidebar-foreground: 248 250 252;
-    --sidebar-primary: 255 111 0;
+    --sidebar-primary: 33 150 243;
     --sidebar-primary-foreground: 255 255 255;
     --sidebar-accent: 30 41 59;
     --sidebar-accent-foreground: 248 250 252;
     --sidebar-border: 51 65 85;
-    --sidebar-ring: 255 111 0;
+    --sidebar-ring: 33 150 243;
   }
 }
 
