@@ -13,97 +13,108 @@ export interface Clan {
   players: Player[];
 }
 
-export interface ClanData {
-  id?: number;
+export interface AppData {
   title: string;
   clans: Clan[];
 }
 
-export const clanDataService = {
-  async getClanData(): Promise<ClanData> {
-    console.log('Fetching clan data from Supabase...');
-    const { data, error } = await supabase
-      .from('clan_data')
-      .select('*')
-      .order('id', { ascending: false })
-      .limit(1)
-      .single();
+class ClanDataService {
+  async getClanData(): Promise<AppData> {
+    try {
+      const { data, error } = await supabase
+        .from('clan_data')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-    if (error) {
-      console.error('Error fetching clan data:', error);
-      // Return default data if no data exists
+      if (error) {
+        console.error('Error fetching clan data:', error);
+        return this.getDefaultData();
+      }
+
+      if (!data || data.length === 0) {
+        console.log('No data found, returning default data');
+        return this.getDefaultData();
+      }
+
+      const appData = data[0];
+      console.log('Fetched data from Supabase:', appData);
+
+      // Type assertion with proper validation
+      const clansData = Array.isArray(appData.clans) ? appData.clans as Clan[] : [];
+      
       return {
-        title: 'MERCILESS CWL TRACKER',
-        clans: []
+        title: appData.title || 'MERCILESS CWL TRACKER',
+        clans: clansData
       };
+    } catch (error) {
+      console.error('Error in getClanData:', error);
+      return this.getDefaultData();
     }
-
-    console.log('Fetched clan data:', data);
-    
-    // Parse the JSON data properly
-    let clans: Clan[] = [];
-    if (data.clans && typeof data.clans === 'object') {
-      clans = Array.isArray(data.clans) ? data.clans as Clan[] : [];
-    }
-
-    return {
-      id: data.id,
-      title: data.title,
-      clans: clans
-    };
-  },
-
-  async saveClanData(clanData: ClanData): Promise<void> {
-    console.log('Saving clan data to Supabase:', clanData);
-    
-    if (clanData.id) {
-      // Update existing record
-      const { error } = await supabase
-        .from('clan_data')
-        .update({
-          title: clanData.title,
-          clans: clanData.clans as any,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', clanData.id);
-
-      if (error) {
-        console.error('Error updating clan data:', error);
-        throw error;
-      }
-    } else {
-      // Insert new record
-      const { error } = await supabase
-        .from('clan_data')
-        .insert({
-          title: clanData.title,
-          clans: clanData.clans as any
-        });
-
-      if (error) {
-        console.error('Error inserting clan data:', error);
-        throw error;
-      }
-    }
-    
-    console.log('Clan data saved successfully');
-  },
-
-  async saveTitle(title: string): Promise<void> {
-    console.log('Saving title to Supabase:', title);
-    const currentData = await this.getClanData();
-    await this.saveClanData({
-      ...currentData,
-      title
-    });
-  },
-
-  async saveClans(clans: Clan[]): Promise<void> {
-    console.log('Saving clans to Supabase:', clans);
-    const currentData = await this.getClanData();
-    await this.saveClanData({
-      ...currentData,
-      clans
-    });
   }
-};
+
+  async saveClanData(appData: AppData): Promise<boolean> {
+    try {
+      console.log('Saving data to Supabase:', appData);
+      
+      // First, try to get existing data
+      const { data: existingData, error: fetchError } = await supabase
+        .from('clan_data')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (fetchError) {
+        console.error('Error fetching existing data:', fetchError);
+      }
+
+      let result;
+      
+      if (existingData && existingData.length > 0) {
+        // Update existing record
+        const { data, error } = await supabase
+          .from('clan_data')
+          .update({
+            title: appData.title,
+            clans: appData.clans,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingData[0].id)
+          .select();
+        
+        result = { data, error };
+      } else {
+        // Insert new record
+        const { data, error } = await supabase
+          .from('clan_data')
+          .insert({
+            title: appData.title,
+            clans: appData.clans
+          })
+          .select();
+        
+        result = { data, error };
+      }
+
+      if (result.error) {
+        console.error('Error saving clan data:', result.error);
+        return false;
+      }
+
+      console.log('Data saved successfully:', result.data);
+      return true;
+    } catch (error) {
+      console.error('Error in saveClanData:', error);
+      return false;
+    }
+  }
+
+  private getDefaultData(): AppData {
+    return {
+      title: 'MERCILESS CWL TRACKER',
+      clans: []
+    };
+  }
+}
+
+export const clanDataService = new ClanDataService();

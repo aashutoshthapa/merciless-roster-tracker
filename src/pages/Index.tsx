@@ -8,6 +8,7 @@ import { Shield, Users, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ClanRoster } from '@/components/ClanRoster';
 import { ClanCheck } from '@/components/ClanCheck';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { clanDataService } from '@/services/clanDataService';
 
 const Index = () => {
@@ -16,15 +17,15 @@ const Index = () => {
   const { data: appData, isLoading, error } = useQuery({
     queryKey: ['app-data'],
     queryFn: () => clanDataService.getClanData(),
-    refetchInterval: 30000, // Refetch every 30 seconds to keep data fresh
+    refetchInterval: 30000,
   });
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center text-gray-700">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p>Loading CWL Tracker...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center text-foreground">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading CWL Tracker...</p>
         </div>
       </div>
     );
@@ -32,13 +33,13 @@ const Index = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center text-gray-700">
-          <p className="text-red-500 mb-4">Error loading data</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4 font-medium">Error loading data</p>
           <Button 
             onClick={() => window.location.reload()} 
             variant="outline" 
-            className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
           >
             Retry
           </Button>
@@ -48,49 +49,55 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg border-b-4 border-orange-400">
+      <header className="bg-white dark:bg-slate-800 shadow-lg border-b-4 border-primary">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Shield className="h-10 w-10 text-orange-400" />
+              <Shield className="h-10 w-10 text-primary" />
               <div>
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-3xl font-bold text-secondary dark:text-white">
                   {appData?.title || 'MERCILESS CWL TRACKER'}
                 </h1>
-                <p className="text-blue-100">Clash of Clans War League Management</p>
+                <p className="text-muted-foreground">Clash of Clans War League Management</p>
               </div>
             </div>
-            <Link to="/admin">
-              <Button variant="outline" className="border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-white bg-white/10 backdrop-blur-sm">
-                Admin Panel
-              </Button>
-            </Link>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <Link to="/admin">
+                <Button 
+                  variant="outline" 
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-white/90 dark:bg-slate-700 backdrop-blur-sm"
+                >
+                  Admin Panel
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-0 rounded-2xl">
+        <Card className="bg-white dark:bg-slate-800 shadow-xl border-border rounded-2xl">
           <CardHeader>
             <div className="flex items-center space-x-2 mb-4">
-              <Users className="h-6 w-6 text-orange-500" />
-              <CardTitle className="text-2xl text-gray-800">CWL Management Dashboard</CardTitle>
+              <Users className="h-6 w-6 text-primary" />
+              <CardTitle className="text-2xl text-foreground">CWL Management Dashboard</CardTitle>
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-xl">
+              <TabsList className="grid w-full grid-cols-2 bg-muted rounded-xl">
                 <TabsTrigger 
                   value="roster" 
-                  className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg"
+                  className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground rounded-lg font-medium"
                 >
                   CWL Roster
                 </TabsTrigger>
                 <TabsTrigger 
                   value="check" 
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white rounded-lg"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium"
                 >
                   Clan Check
                 </TabsTrigger>

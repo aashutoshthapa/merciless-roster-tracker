@@ -40,7 +40,6 @@ interface ClanApiResponse {
 const fetchClanMembers = async (clanTag: string): Promise<ClanMember[]> => {
   if (!clanTag) return [];
   
-  // Remove # if present and clean the tag
   const cleanTag = clanTag.replace('#', '').toUpperCase();
   const url = `https://api.clashk.ing/clan/${cleanTag}/basic`;
   
@@ -54,7 +53,6 @@ const fetchClanMembers = async (clanTag: string): Promise<ClanMember[]> => {
     const data: ClanApiResponse = await response.json();
     console.log('API response for clan', cleanTag, ':', data);
     
-    // Handle case where memberList might be null or undefined
     return data.memberList || [];
   } catch (error) {
     console.error('Error fetching clan members:', error);
@@ -75,7 +73,7 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
       queryFn: () => fetchClanMembers(clan.tag),
       enabled: !!clan.tag,
       retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
     })
   );
 
@@ -115,9 +113,9 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
     <div className="space-y-6">
       {clans.length === 0 ? (
         <div className="text-center py-12">
-          <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">No Clans to Check</h3>
-          <p className="text-gray-500">Add some clans in the admin panel to start checking member status.</p>
+          <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-muted-foreground mb-2">No Clans to Check</h3>
+          <p className="text-muted-foreground">Add some clans in the admin panel to start checking member status.</p>
         </div>
       ) : (
         <Accordion type="multiple" className="w-full">
@@ -128,26 +126,26 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
             const hasError = query.error;
 
             return (
-              <AccordionItem key={clan.id} value={clan.id} className="border-2 border-gray-200 rounded-xl mb-4 overflow-hidden shadow-sm">
-                <AccordionTrigger className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-4 hover:no-underline hover:from-blue-600 hover:to-indigo-600 transition-all">
+              <AccordionItem key={clan.id} value={clan.id} className="border-2 border-border rounded-xl mb-4 overflow-hidden shadow-sm bg-card">
+                <AccordionTrigger className="bg-secondary text-secondary-foreground px-6 py-4 hover:no-underline hover:bg-secondary/90 transition-all">
                   <div className="flex items-center justify-between w-full mr-4">
                     <div className="flex items-center space-x-3">
-                      <CheckCircle className="h-5 w-5 text-orange-300" />
+                      <CheckCircle className="h-5 w-5 text-primary" />
                       <span className="font-semibold text-lg">{clan.name}</span>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2 text-blue-100">
+                      <div className="flex items-center space-x-2 text-secondary-foreground/80">
                         <Hash className="h-4 w-4" />
                         <span className="font-mono">{clan.tag}</span>
                       </div>
-                      {hasError && <AlertCircle className="h-5 w-5 text-red-300" />}
+                      {hasError && <AlertCircle className="h-5 w-5 text-destructive" />}
                       {query.isLoading || isRefreshing ? (
                         <Badge variant="secondary" className="bg-yellow-500 text-white border-0">
                           <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
                           Loading...
                         </Badge>
                       ) : hasError ? (
-                        <Badge variant="secondary" className="bg-red-500 text-white border-0">
+                        <Badge variant="destructive">
                           Error
                         </Badge>
                       ) : null}
@@ -158,55 +156,56 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                         }}
                         disabled={query.isLoading || isRefreshing || !clan.tag}
                         size="sm"
-                        className="bg-white/20 text-white hover:bg-white/30 border border-white/30 shadow-sm"
+                        variant="outline"
+                        className="bg-white/20 border-white/30 text-secondary-foreground hover:bg-white/30 shadow-sm"
                       >
                         <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                       </Button>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="p-0 bg-white">
+                <AccordionContent className="p-0 bg-card">
                   {hasError ? (
                     <div className="p-6 text-center">
-                      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-red-600 mb-2">Failed to Load Clan Data</h3>
-                      <p className="text-gray-600 mb-4">
+                      <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-destructive mb-2">Failed to Load Clan Data</h3>
+                      <p className="text-muted-foreground mb-4">
                         Could not fetch member data for this clan. Please check the clan tag and try again.
                       </p>
                       <Button 
                         onClick={() => handleRefreshClan(clan.id, clan.tag)}
                         variant="outline"
-                        className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                        className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                       >
                         Try Again
                       </Button>
                     </div>
                   ) : clan.players.length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">
+                    <div className="p-6 text-center text-muted-foreground">
                       No players in this clan's roster
                     </div>
                   ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-border">
                       {clan.players.map((player, playerIndex) => {
                         const isInClan = checkPlayerInClan(player.tag, clanMembers);
                         
                         return (
-                          <div key={playerIndex} className="p-4 hover:bg-gray-50 transition-colors">
+                          <div key={playerIndex} className="p-4 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 {isInClan ? (
                                   <CheckCircle className="h-5 w-5 text-green-500" />
                                 ) : (
-                                  <XCircle className="h-5 w-5 text-red-500" />
+                                  <XCircle className="h-5 w-5 text-destructive" />
                                 )}
                                 <div>
-                                  <span className="font-medium text-gray-900">{player.name}</span>
-                                  <p className="text-sm font-mono text-gray-600">{player.tag}</p>
+                                  <span className="font-medium text-foreground">{player.name}</span>
+                                  <p className="text-sm font-mono text-muted-foreground">{player.tag}</p>
                                 </div>
                               </div>
                               <Badge 
                                 variant={isInClan ? "default" : "destructive"}
-                                className={isInClan ? "bg-green-500 hover:bg-green-600" : ""}
+                                className={isInClan ? "bg-green-500 hover:bg-green-600 text-white" : ""}
                               >
                                 {isInClan ? "In Clan" : "Not Found"}
                               </Badge>
