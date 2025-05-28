@@ -15,6 +15,7 @@ import { clanDataService, type Player, type Clan } from '@/services/clanDataServ
 import { useAuth } from '@/contexts/AuthContext';
 import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ const AdminPanel = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newClanName, setNewClanName] = useState('');
   const [newClanTag, setNewClanTag] = useState('');
+  const [newClanCwlType, setNewClanCwlType] = useState<'Lazy' | 'Regular'>('Regular');
+  const [newClanLeague, setNewClanLeague] = useState<'Champion 1' | 'Champion 2' | 'Champion 3' | 'Master 1' | 'Master 2' | 'Master 3' | 'Crystal 1'>('Crystal 1');
   const [editingClan, setEditingClan] = useState<Clan | null>(null);
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerTag, setNewPlayerTag] = useState('');
@@ -96,6 +99,8 @@ const AdminPanel = () => {
       id: Date.now().toString(),
       name: newClanName.trim(),
       tag: newClanTag.trim(),
+      cwlType: newClanCwlType,
+      league: newClanLeague,
       players: [],
     };
 
@@ -103,6 +108,55 @@ const AdminPanel = () => {
     saveClansMutation.mutate(updatedClans);
     setNewClanName('');
     setNewClanTag('');
+    setNewClanCwlType('Regular');
+    setNewClanLeague('Crystal 1');
+  };
+
+  const editClan = (clan: Clan) => {
+    setEditingClan(clan);
+    setNewClanName(clan.name);
+    setNewClanTag(clan.tag);
+    setNewClanCwlType(clan.cwlType);
+    setNewClanLeague(clan.league);
+  };
+
+  const saveClanEdit = () => {
+    if (!editingClan || !newClanName.trim() || !newClanTag.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all clan details.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updatedClans = (appData?.clans || []).map(clan => {
+      if (clan.id === editingClan.id) {
+        return {
+          ...clan,
+          name: newClanName.trim(),
+          tag: newClanTag.trim(),
+          cwlType: newClanCwlType,
+          league: newClanLeague,
+        };
+      }
+      return clan;
+    });
+
+    saveClansMutation.mutate(updatedClans);
+    setEditingClan(null);
+    setNewClanName('');
+    setNewClanTag('');
+    setNewClanCwlType('Regular');
+    setNewClanLeague('Crystal 1');
+  };
+
+  const cancelEdit = () => {
+    setEditingClan(null);
+    setNewClanName('');
+    setNewClanTag('');
+    setNewClanCwlType('Regular');
+    setNewClanLeague('Crystal 1');
   };
 
   const deleteClan = (clanId: string) => {
@@ -323,13 +377,13 @@ const AdminPanel = () => {
 
           <TabsContent value="clans">
             <div className="space-y-6">
-              {/* Add New Clan */}
+              {/* Add/Edit Clan */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Add New Clan</CardTitle>
+                  <CardTitle>{editingClan ? 'Edit Clan' : 'Add New Clan'}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div>
                       <Label htmlFor="clanName">Clan Name</Label>
                       <Input
@@ -348,15 +402,63 @@ const AdminPanel = () => {
                         placeholder="#CLANTAGX"
                       />
                     </div>
-                    <div className="flex items-end">
-                      <Button 
-                        onClick={addClan}
-                        disabled={!newClanName.trim() || !newClanTag.trim() || saveClansMutation.isPending}
-                        className="w-full bg-primary hover:bg-primary/90"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Clan
-                      </Button>
+                    <div>
+                      <Label htmlFor="cwlType">CWL Type</Label>
+                      <Select value={newClanCwlType} onValueChange={(value: 'Lazy' | 'Regular') => setNewClanCwlType(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select CWL type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Regular">Regular CWL</SelectItem>
+                          <SelectItem value="Lazy">Lazy CWL</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="league">League</Label>
+                      <Select value={newClanLeague} onValueChange={(value: 'Champion 1' | 'Champion 2' | 'Champion 3' | 'Master 1' | 'Master 2' | 'Master 3' | 'Crystal 1') => setNewClanLeague(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select league" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Champion 1">Champion 1</SelectItem>
+                          <SelectItem value="Champion 2">Champion 2</SelectItem>
+                          <SelectItem value="Champion 3">Champion 3</SelectItem>
+                          <SelectItem value="Master 1">Master 1</SelectItem>
+                          <SelectItem value="Master 2">Master 2</SelectItem>
+                          <SelectItem value="Master 3">Master 3</SelectItem>
+                          <SelectItem value="Crystal 1">Crystal 1</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end gap-2">
+                      {editingClan ? (
+                        <>
+                          <Button 
+                            onClick={saveClanEdit}
+                            disabled={!newClanName.trim() || !newClanTag.trim() || saveClansMutation.isPending}
+                            className="bg-primary hover:bg-primary/90"
+                          >
+                            <Save className="h-4 w-4 mr-2" />
+                            Save
+                          </Button>
+                          <Button 
+                            onClick={cancelEdit}
+                            variant="outline"
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <Button 
+                          onClick={addClan}
+                          disabled={!newClanName.trim() || !newClanTag.trim() || saveClansMutation.isPending}
+                          className="w-full bg-primary hover:bg-primary/90"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Clan
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -381,8 +483,28 @@ const AdminPanel = () => {
                           <Badge variant="secondary">
                             {clan.players.length} players
                           </Badge>
+                          <Badge variant={clan.cwlType === 'Lazy' ? 'destructive' : 'default'}>
+                            {clan.cwlType} CWL
+                          </Badge>
+                          <Badge variant="outline">
+                            {clan.league}
+                          </Badge>
                           <Button
-                            onClick={() => deleteClan(clan.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              editClan(clan);
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteClan(clan.id);
+                            }}
                             variant="outline"
                             size="sm"
                             className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"

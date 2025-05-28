@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Player {
@@ -10,6 +11,8 @@ export interface Clan {
   id: string;
   name: string;
   tag: string;
+  cwlType: 'Lazy' | 'Regular';
+  league: 'Champion 1' | 'Champion 2' | 'Champion 3' | 'Master 1' | 'Master 2' | 'Master 3' | 'Crystal 1';
   players: Player[];
 }
 

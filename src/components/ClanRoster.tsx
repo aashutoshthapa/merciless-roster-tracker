@@ -1,7 +1,8 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Users, Hash, MessageCircle } from 'lucide-react';
+import { Users, Hash, MessageCircle, Trophy, Zap } from 'lucide-react';
 
 interface Player {
   name: string;
@@ -13,6 +14,8 @@ interface Clan {
   id: string;
   name: string;
   tag: string;
+  cwlType: 'Lazy' | 'Regular';
+  league: 'Champion 1' | 'Champion 2' | 'Champion 3' | 'Master 1' | 'Master 2' | 'Master 3' | 'Crystal 1';
   players: Player[];
 }
 
@@ -44,6 +47,14 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                       <Hash className="h-4 w-4" />
                       <span className="font-mono">{clan.tag}</span>
                     </div>
+                    <Badge variant={clan.cwlType === 'Lazy' ? 'destructive' : 'default'} className={clan.cwlType === 'Lazy' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}>
+                      <Zap className="h-3 w-3 mr-1" />
+                      {clan.cwlType} CWL
+                    </Badge>
+                    <Badge variant="outline" className="bg-yellow-500 text-white border-yellow-600">
+                      <Trophy className="h-3 w-3 mr-1" />
+                      {clan.league}
+                    </Badge>
                     <Badge variant="secondary" className="bg-[#ff6f00] text-white">
                       {clan.players.length} players
                     </Badge>
