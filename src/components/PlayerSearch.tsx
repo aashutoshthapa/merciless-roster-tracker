@@ -69,15 +69,15 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-foreground">
           <Search className="h-6 w-6 text-primary" />
-          <span>Find Your Clan Assignment</span>
+          <span className="responsive-header">Find Your Clan Assignment</span>
         </CardTitle>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground responsive-text">
           Search by Discord username or player tag to find which clan you're assigned to
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Search Input */}
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -88,7 +88,7 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
           <Button 
             onClick={handleSearch}
             disabled={!searchQuery.trim()}
-            className="bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
           >
             <Search className="h-4 w-4 mr-2" />
             Search
@@ -101,26 +101,26 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
             {searchResults.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-muted-foreground mb-2">No Results Found</h3>
-                <p className="text-muted-foreground">
+                <h3 className="responsive-header text-muted-foreground mb-2">No Results Found</h3>
+                <p className="text-muted-foreground responsive-text">
                   No players found matching "{searchQuery}". Try searching with a different Discord username or player tag.
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="responsive-subheader text-foreground">
                   Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}:
                 </h3>
                 {searchResults.map((result, index) => (
                   <Card key={index} className="border-2 border-primary/20 bg-primary/5">
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-2">
                           <div className="flex items-center space-x-3">
                             <Users className="h-5 w-5 text-primary" />
-                            <span className="font-semibold text-lg text-foreground">{result.playerName}</span>
+                            <span className="font-semibold responsive-text text-foreground">{result.playerName}</span>
                           </div>
-                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                             <div className="flex items-center space-x-1">
                               <Hash className="h-4 w-4" />
                               <span className="font-mono">{result.playerTag}</span>
@@ -131,19 +131,17 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <a 
-                              href={`https://link.clashofclans.com/en?action=OpenClanProfile&tag=%23${result.clanTag.slice(1)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:text-primary"
-                            >
-                              <Badge className="bg-secondary text-secondary-foreground">
-                                {result.clanName}
-                              </Badge>
-                            </a>
-                          </div>
+                        <div className="flex flex-col items-start sm:items-end gap-2">
+                          <a 
+                            href={`https://link.clashofclans.com/en?action=OpenClanProfile&tag=%23${result.clanTag.slice(1)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary"
+                          >
+                            <Badge className="bg-secondary text-secondary-foreground">
+                              {result.clanName}
+                            </Badge>
+                          </a>
                           <p className="text-sm font-mono text-muted-foreground">{result.clanTag}</p>
                         </div>
                       </div>
