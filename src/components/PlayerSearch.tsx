@@ -66,7 +66,7 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
 
   return (
     <Card className="bg-card shadow-xl border-border rounded-2xl">
-      <CardHeader>
+      <CardHeader className="space-y-2">
         <CardTitle className="flex items-center space-x-2 text-foreground">
           <Search className="h-6 w-6 text-primary" />
           <span className="responsive-header">Find Your Clan Assignment</span>
@@ -77,7 +77,7 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Search Input */}
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -88,7 +88,7 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
           <Button 
             onClick={handleSearch}
             disabled={!searchQuery.trim()}
-            className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
+            className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-primary-foreground"
           >
             <Search className="h-4 w-4 mr-2" />
             Search
@@ -107,12 +107,12 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <h3 className="responsive-subheader text-foreground">
                   Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}:
                 </h3>
                 {searchResults.map((result, index) => (
-                  <Card key={index} className="border-2 border-primary/20 bg-primary/5">
+                  <Card key={index} className="border border-border bg-card rounded-xl">
                     <CardContent className="p-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-2">
@@ -123,17 +123,19 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                             <div className="flex items-center space-x-1">
                               <Hash className="h-4 w-4" />
-                              <span className="font-mono">{result.playerTag}</span>
+                              <span className="font-mono">{result.playerTag.replace('#', '')}</span>
                             </div>
-                            <div className="flex items-center space-x-1">
-                              <MessageCircle className="h-4 w-4" />
-                              <span>@{result.discordUsername}</span>
-                            </div>
+                            {result.discordUsername && (
+                              <div className="flex items-center space-x-1">
+                                <MessageCircle className="h-4 w-4" />
+                                <span>@{result.discordUsername}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex flex-col items-start sm:items-end gap-2">
                           <a 
-                            href={`https://link.clashofclans.com/en?action=OpenClanProfile&tag=%23${result.clanTag.slice(1)}`}
+                            href={`https://link.clashofclans.com/en?action=OpenClanProfile&tag=${result.clanTag.replace('#', '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:text-primary"
