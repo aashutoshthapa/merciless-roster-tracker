@@ -66,7 +66,7 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="flex items-center space-x-2 text-blue-200">
                       <Hash className="h-4 w-4" />
-                      <span className="font-mono text-sm">{clan.tag}</span>
+                      <span className="font-mono text-sm">{clan.tag.replace('#', '')}</span>
                     </div>
                     <Badge variant={clan.cwlType === 'Lazy' ? 'destructive' : 'default'} className={clan.cwlType === 'Lazy' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}>
                       <Zap className="h-3 w-3 mr-1" />
@@ -97,7 +97,7 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                             <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                               <div className="flex items-center space-x-1">
                                 <Hash className="h-3 w-3" />
-                                <span className="font-mono">{player.tag}</span>
+                                <span className="font-mono">{player.tag.replace('#', '')}</span>
                               </div>
                               {player.discordUsername && (
                                 <div className="flex items-center space-x-1">
