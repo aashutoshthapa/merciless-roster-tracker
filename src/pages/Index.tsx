@@ -57,10 +57,10 @@ const Index = () => {
             <div className="flex items-center space-x-4">
               <Shield className="h-10 w-10 text-primary" />
               <div>
-                <h1 className="text-3xl font-bold text-secondary">
+                <h1 className="text-3xl font-bold text-foreground">
                   {appData?.title || 'MERCILESS CWL TRACKER'}
                 </h1>
-                <p className="text-muted-foreground">CWL Management</p>
+                <p className="text-muted-foreground responsive-text">CWL Management</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -79,51 +79,47 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <Card className="bg-card shadow-xl border-border rounded-2xl">
-          <CardHeader>
-            <div className="flex items-center space-x-2 mb-4">
-              <Users className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl text-foreground">CWL Management Dashboard</CardTitle>
-            </div>
+      <main className="container mx-auto p-8 responsive-padding space-y-8 responsive-gap">
+        <div className="flex items-center space-x-2">
+           <Users className="h-6 w-6 text-primary" />
+           <h2 className="responsive-subheader font-semibold text-foreground">CWL Management Dashboard</h2>
+         </div>
             
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
-                <TabsTrigger 
-                  value="search" 
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Find My Clan
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="roster" 
-                  className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground rounded-lg font-medium"
-                >
-                  CWL Roster
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="check" 
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium"
-                >
-                  Clan Check
-                </TabsTrigger>
-              </TabsList>
+         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+           <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl p-1">
+             <TabsTrigger 
+               value="search" 
+               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium responsive-text"
+             >
+               <Search className="h-4 w-4 mr-2" />
+               Find My Clan
+             </TabsTrigger>
+             <TabsTrigger 
+               value="roster" 
+               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium responsive-text"
+             >
+               CWL Roster
+             </TabsTrigger>
+             <TabsTrigger 
+               value="check" 
+               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium responsive-text"
+             >
+               Clan Check
+             </TabsTrigger>
+           </TabsList>
 
-              <TabsContent value="search" className="mt-6">
-                <PlayerSearch clans={appData?.clans || []} />
-              </TabsContent>
+           <TabsContent value="search" className="mt-6">
+             <PlayerSearch clans={appData?.clans || []} />
+           </TabsContent>
 
-              <TabsContent value="roster" className="mt-6">
-                <ClanRoster clans={appData?.clans || []} />
-              </TabsContent>
+           <TabsContent value="roster" className="mt-6">
+             <ClanRoster clans={appData?.clans || []} />
+           </TabsContent>
 
-              <TabsContent value="check" className="mt-6">
-                <ClanCheck clans={appData?.clans || []} />
-              </TabsContent>
-            </Tabs>
-          </CardHeader>
-        </Card>
+           <TabsContent value="check" className="mt-6">
+             <ClanCheck clans={appData?.clans || []} />
+           </TabsContent>
+         </Tabs>
       </main>
     </div>
   );
