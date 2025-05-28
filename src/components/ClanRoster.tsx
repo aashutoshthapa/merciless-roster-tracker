@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -23,7 +22,29 @@ interface ClanRosterProps {
   clans: Clan[];
 }
 
+const getLeagueRank = (league: Clan['league']): number => {
+  const ranks: Record<Clan['league'], number> = {
+    'Champion 1': 7,
+    'Champion 2': 6,
+    'Champion 3': 5,
+    'Master 1': 4,
+    'Master 2': 3,
+    'Master 3': 2,
+    'Crystal 1': 1
+  };
+  return ranks[league];
+};
+
 export const ClanRoster = ({ clans }: ClanRosterProps) => {
+  const sortedClans = [...clans].sort((a, b) => {
+    // First sort by CWL type (Regular first)
+    if (a.cwlType !== b.cwlType) {
+      return a.cwlType === 'Regular' ? -1 : 1;
+    }
+    // Then sort by league (higher to lower)
+    return getLeagueRank(b.league) - getLeagueRank(a.league);
+  });
+
   return (
     <div className="space-y-6">
       {clans.length === 0 ? (
@@ -34,7 +55,7 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
         </div>
       ) : (
         <Accordion type="multiple" className="w-full">
-          {clans.map((clan) => (
+          {sortedClans.map((clan) => (
             <AccordionItem key={clan.id} value={clan.id} className="border-2 border-slate-200 rounded-lg mb-4">
               <AccordionTrigger className="bg-[#1a237e] text-white px-6 py-4 rounded-t-lg hover:no-underline">
                 <div className="flex items-center justify-between w-full mr-4">
