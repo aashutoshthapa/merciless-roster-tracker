@@ -63,8 +63,26 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                     <Users className="h-5 w-5 text-primary" />
                     <div className="flex items-center gap-2">
                       <span className="font-semibold responsive-text text-foreground">{clan.name}</span>
+                      {clan.league === 'Champion 1' && (
+                        <img src="/images/champion1.png" alt="Champion 1" className="h-5 w-auto" />
+                      )}
+                      {clan.league === 'Champion 2' && (
+                        <img src="/images/champion2.png" alt="Champion 2" className="h-5 w-auto" />
+                      )}
                       {clan.league === 'Champion 3' && (
                         <img src="/images/champion3.png" alt="Champion 3" className="h-5 w-auto" />
+                      )}
+                      {clan.league === 'Master 1' && (
+                        <img src="/images/master1.png" alt="Master 1" className="h-5 w-auto" />
+                      )}
+                      {clan.league === 'Master 2' && (
+                        <img src="/images/master2.png" alt="Master 2" className="h-5 w-auto" />
+                      )}
+                      {clan.league === 'Master 3' && (
+                        <img src="/images/master3.png" alt="Master 3" className="h-5 w-auto" />
+                      )}
+                      {clan.league === 'Crystal 1' && (
+                        <img src="/images/crystal1.png" alt="Crystal 1" className="h-5 w-auto" />
                       )}
                     </div>
                   </div>
