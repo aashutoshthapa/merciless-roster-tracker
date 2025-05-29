@@ -74,11 +74,7 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                     </Badge>
                     <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
                       <Trophy className="h-3 w-3 mr-1 text-primary" />
-                      {clan.league === 'Champion 3' ? (
-                        <img src="/images/champion3.png" alt="Champion 3" className="h-4 w-auto" />
-                      ) : (
-                        clan.league
-                      )}
+                      {clan.league}
                     </Badge>
                     <Badge variant="secondary" className="bg-secondary text-secondary-foreground">
                       {clan.players.length} players
