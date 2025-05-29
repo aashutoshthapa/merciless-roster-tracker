@@ -129,7 +129,7 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                 <AccordionTrigger className="bg-card text-card-foreground px-6 py-4 hover:no-underline hover:bg-muted/50 transition-all">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full mr-4 gap-3 sm:gap-4">
                     <div className="flex items-center space-x-3">
-                      <CheckCircle className="h-5 w-5 text-primary" />
+                      <img src="/images/clan-badge.png" alt="Clan Badge" className="h-6 w-6" />
                       <span className="font-semibold responsive-text text-foreground">{clan.name}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">

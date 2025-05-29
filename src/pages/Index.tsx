@@ -81,9 +81,9 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto p-8 responsive-padding space-y-8 responsive-gap">
         <div className="flex items-center space-x-2">
-           <Users className="h-6 w-6 text-primary" />
-           <h2 className="responsive-subheader font-semibold text-foreground">CWL Management Dashboard</h2>
-         </div>
+          <img src="/images/archer-queen.png" alt="Archer Queen" className="h-6 w-6" />
+          <h2 className="responsive-subheader font-semibold text-foreground">CWL Management Dashboard</h2>
+        </div>
             
          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
            <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl p-1">
