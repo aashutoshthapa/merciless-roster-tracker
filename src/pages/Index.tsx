@@ -55,7 +55,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Shield className="h-10 w-10 text-primary" />
+              <img src="/images/archer-queen.png" alt="Archer Queen" className="h-10 w-10" />
               <div>
                 <h1 className="text-3xl font-bold text-foreground">
                   {appData?.title || 'MERCILESS CWL TRACKER'}
