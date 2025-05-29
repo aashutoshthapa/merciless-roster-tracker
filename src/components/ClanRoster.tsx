@@ -61,7 +61,12 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full mr-4 gap-3 sm:gap-4">
                   <div className="flex items-center space-x-3">
                     <Users className="h-5 w-5 text-primary" />
-                    <span className="font-semibold responsive-text text-foreground">{clan.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold responsive-text text-foreground">{clan.name}</span>
+                      {clan.league === 'Champion 3' && (
+                        <img src="/images/champion3.png" alt="Champion 3" className="h-5 w-auto" />
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="flex items-center space-x-2 text-muted-foreground">
