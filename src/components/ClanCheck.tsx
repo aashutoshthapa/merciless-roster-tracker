@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { CheckCircle, XCircle, RefreshCw, AlertCircle, Hash } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw, AlertCircle, Hash, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { clashApiService } from '@/services/clashApiService';
 import { Player } from '@/services/clanDataService';
@@ -107,12 +107,16 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                     <div className="flex items-center space-x-3">
                       <CheckCircle className="h-5 w-5 text-primary" />
                       <span className="font-semibold responsive-text text-foreground">{clan.name}</span>
+                      <div className="flex items-center text-muted-foreground text-sm space-x-2">
+                        <Users className="h-4 w-4" />
+                        <span>{clanMembers.length}/{clan.players.length}</span>
+                      </div>
+                      <div className="flex items-center text-muted-foreground text-sm space-x-2">
+                        <Hash className="h-4 w-4" />
+                        <span className="font-mono">{clan.tag.replace('#', '')}</span>
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <div className="flex items-center space-x-2 text-muted-foreground">
-                        <Hash className="h-4 w-4" />
-                        <span className="font-mono text-sm">{clan.tag.replace('#', '')}</span>
-                      </div>
                       {hasError && <AlertCircle className="h-5 w-5 text-destructive" />}
                       {query.isLoading || isRefreshing ? (
                         <Badge variant="secondary" className="bg-muted text-muted-foreground border-0">
