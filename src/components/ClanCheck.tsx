@@ -100,6 +100,11 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
             const clanMembers = query.data || [];
             const hasError = query.error;
 
+            // Calculate how many players from the roster are found in the fetched clan members
+            const playersInClanCount = clan.players.filter(player => 
+              checkPlayerInClan(player.tag, clanMembers)
+            ).length;
+
             return (
               <AccordionItem key={clan.id} value={clan.id} className="border border-border rounded-xl mb-4 overflow-hidden card">
                 <AccordionTrigger className="bg-card text-card-foreground px-6 py-4 hover:no-underline hover:bg-muted/50 transition-all">
@@ -109,7 +114,7 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                       <span className="font-semibold responsive-text text-foreground">{clan.name}</span>
                       <div className="flex items-center text-muted-foreground text-sm space-x-2">
                         <Users className="h-4 w-4" />
-                        <span>{clanMembers.length}/{clan.players.length}</span>
+                        <span>{playersInClanCount}/{clan.players.length}</span>
                       </div>
                       <div className="flex items-center text-muted-foreground text-sm space-x-2">
                         <Hash className="h-4 w-4" />
