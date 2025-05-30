@@ -6,11 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CheckCircle, XCircle, RefreshCw, AlertCircle, Hash } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-
-interface Player {
-  name: string;
-  tag: string;
-}
+import { clashApiService } from '@/services/clashApiService';
+import { Player } from '@/services/clanDataService';
 
 interface Clan {
   id: string;
@@ -23,36 +20,15 @@ interface ClanCheckProps {
   clans: Clan[];
 }
 
-interface ClanMember {
-  name: string;
-  tag: string;
-  role: string;
-  expLevel: number;
-  trophies: number;
-  townhall: number;
-}
-
-interface ClanApiResponse {
-  memberList?: ClanMember[];
-}
-
-const fetchClanMembers = async (clanTag: string): Promise<ClanMember[]> => {
+const fetchClanMembers = async (clanTag: string): Promise<Player[]> => {
   if (!clanTag) return [];
   
-  const cleanTag = clanTag.replace('#', '').toUpperCase();
-  const url = `https://api.clashk.ing/clan/${cleanTag}/basic`;
-  
   try {
-    console.log(`Fetching clan data from: ${url}`);
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch clan data: ${response.status}`);
-    }
+    console.log(`Fetching clan data for tag: ${clanTag}`);
+    const members = await clashApiService.getClanMembers(clanTag);
+    console.log('API response for clan', clanTag, ':', members);
     
-    const data: ClanApiResponse = await response.json();
-    console.log('API response for clan', cleanTag, ':', data);
-    
-    return data.memberList || [];
+    return members;
   } catch (error) {
     console.error('Error fetching clan members:', error);
     throw error;
@@ -103,7 +79,7 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
     }
   };
 
-  const checkPlayerInClan = (playerTag: string, clanMembers: ClanMember[]): boolean => {
+  const checkPlayerInClan = (playerTag: string, clanMembers: Player[]): boolean => {
     const normalizedPlayerTag = normalizeTag(playerTag);
     return clanMembers.some(member => normalizeTag(member.tag) === normalizedPlayerTag);
   };

@@ -1,10 +1,23 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Player {
   name: string;
   tag: string;
   discordUsername: string;
+  townHallLevel?: number;
+  expLevel?: number;
+  role?: string;
+  trophies?: number;
+  donations?: number;
+  donationsReceived?: number;
+  league?: {
+    name: string;
+    iconUrls: {
+      small: string;
+      tiny: string;
+      medium: string;
+    };
+  };
 }
 
 export interface Clan {
