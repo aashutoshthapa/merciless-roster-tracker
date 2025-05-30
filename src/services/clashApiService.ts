@@ -1,7 +1,9 @@
 import { Player } from './clanDataService';
 
-const API_BASE_URL = 'https://cocproxy.royaleapi.dev/v1';
-const API_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6ImExMjZkOGY5LWVkMmQtNDI3MC1hYzdlLTExOTJmNzFhZmIzYSIsImlhdCI6MTc0ODYwMTM3Nywic3ViIjoiZGV2ZWxvcGVyL2QyMzllMDZkLTk0MWMtOTg1Yi0wZjQ0LWY5NWRlYzFlNmU3MSIsInNjb3BlcyI6WyJjbGFzaCJdLCJsaW1pdHMiOlt7InRpZXIiOiJkZXZlbG9wZXIvc2lsdmVyIiwidHlwZSI6InRocm90dGxpbmcifSx7ImNpZHJzIjpbIjQ1Ljc5LjIxOC43OSJdLCJ0eXBlIjoiY2xpZW50In1dfQ.0QdpeO2FxzYHiS9dunJuIAXr7ulhu00r4H6gOPlg1vl4nH2T2CxyEV604e7Uc0035bmH1_-dbg-cAqfCO8sj8A';
+// Point to the Netlify Function endpoint
+const API_BASE_URL = '/.netlify/functions';
+// Remove the API_TOKEN as it will be handled by the Netlify Function environment variable
+// const API_TOKEN = process.env.COC_API_TOKEN || 'YOUR_TOKEN_HERE'; 
 
 interface ClashApiPlayer {
   tag: string;
@@ -44,25 +46,30 @@ interface ClashApiResponse {
 }
 
 class ClashApiService {
-  private async fetchWithAuth(url: string): Promise<Response> {
-    return fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_TOKEN}`,
-        'Accept': 'application/json',
-      },
-    });
-  }
+  // We no longer need fetchWithAuth as the function handles auth
+  // private async fetchWithAuth(url: string): Promise<Response> {
+  //   return fetch(url, {
+  //     headers: {
+  //       'Authorization': `Bearer ${API_TOKEN}`,
+  //       'Accept': 'application/json',
+  //     },
+  //   });
+  // }
 
   async getClanMembers(clanTag: string): Promise<Player[]> {
     try {
-      // Remove the # from the clan tag if it exists
+      // Remove the # from the clan tag if it exists (the function expects it this way)
       const formattedTag = clanTag.startsWith('#') ? clanTag.substring(1) : clanTag;
-      const url = `${API_BASE_URL}/clans/%23${formattedTag}/members`;
+      // Call the Netlify Function endpoint with the clan tag as a query parameter
+      const url = `${API_BASE_URL}/getClanMembers?tag=${formattedTag}`;
       
-      const response = await this.fetchWithAuth(url);
+      // Use a regular fetch as the function handles the authorization header
+      const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+        // The function will return the API error status and body
+        const errorData = await response.json();
+        throw new Error(`API request failed with status ${response.status}: ${errorData.message || JSON.stringify(errorData)}`);
       }
 
       const data: ClashApiResponse = await response.json();
@@ -78,9 +85,9 @@ class ClashApiService {
         trophies: player.trophies,
         donations: player.donations,
         donationsReceived: player.donationsReceived,
-        league: {
-          name: player.league.name,
-          iconUrls: player.league.iconUrls
+        league: { // Ensure league and iconUrls exist before accessing
+          name: player.league?.name || '',
+          iconUrls: player.league?.iconUrls || { small: '', tiny: '', medium: '' }
         }
       }));
     } catch (error) {
