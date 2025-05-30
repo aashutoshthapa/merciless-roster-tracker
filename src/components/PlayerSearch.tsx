@@ -22,17 +22,24 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchMessage, setSearchMessage] = useState<string | null>(null);
 
-  const handleSearch = () => {
-    if (!searchQuery.trim()) return;
+  const handleSearch = async () => {
+    setSearchResults([]);
+    setSearchMessage(null);
+    setHasSearched(false);
 
-    const query = searchQuery.trim().toLowerCase();
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    setHasSearched(true);
+
     const results: SearchResult[] = [];
 
     clans.forEach(clan => {
       clan.players.forEach(player => {
         // Search by Discord username
-        if (player.discordUsername && player.discordUsername.toLowerCase().includes(query)) {
+        if (player.discordUsername && player.discordUsername.toLowerCase().includes(query.toLowerCase())) {
           results.push({
             playerName: player.name,
             playerTag: player.tag,
@@ -42,7 +49,7 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
           });
         }
         // Search by player tag (remove # for comparison)
-        else if (player.tag && player.tag.replace('#', '').toLowerCase().includes(query.replace('#', ''))) {
+        else if (player.tag && player.tag.replace('#', '').toLowerCase().includes(query.replace('#', '').toLowerCase())) {
           results.push({
             playerName: player.name,
             playerTag: player.tag,
@@ -55,7 +62,29 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
     });
 
     setSearchResults(results);
-    setHasSearched(true);
+
+    // If player not found in tracked clans, validate the tag using the API
+    if (results.length === 0) {
+      // Assume the query is a player tag if not found in roster
+      const playerTagToValidate = query.startsWith('#') ? query : `#${query}`;
+      try {
+        const response = await fetch(`/.netlify/functions/validatePlayerTag?tag=${encodeURIComponent(playerTagToValidate)}`);
+        const data = await response.json();
+    
+        if (response.ok && data.valid) {
+          // Removed the specific message for valid tags not in roster
+        } else if (response.status === 404) {
+          setSearchMessage('Invalid player tag.');
+        } else {
+          // Handle other potential API errors
+          setSearchMessage('Error validating player tag. Please try again later.');
+          console.error('API Error:', data);
+        }
+      } catch (error) {
+        setSearchMessage('Could not connect to validation service.');
+        console.error('Fetch Error:', error);
+      }
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -101,10 +130,12 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
             {searchResults.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="responsive-header text-muted-foreground mb-2">No Results Found</h3>
-                <p className="text-muted-foreground responsive-text">
-                  No players found matching "{searchQuery}". Try searching with a different Discord username or player tag.
-                </p>
+                <h3 className="responsive-header text-muted-foreground mb-2">{searchMessage || 'No Results Found'}</h3>
+                {!searchMessage && (
+                  <p className="text-muted-foreground responsive-text">
+                    No players found matching "{searchQuery}". Try searching with a different Discord username or player tag.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
