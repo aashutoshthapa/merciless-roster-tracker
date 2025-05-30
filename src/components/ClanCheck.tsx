@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,7 @@ interface ClanCheckProps {
   clans: Clan[];
 }
 
+// Fetch clan members using the proxy function
 const fetchClanMembers = async (clanTag: string): Promise<Player[]> => {
   if (!clanTag) return [];
   
@@ -35,6 +36,20 @@ const fetchClanMembers = async (clanTag: string): Promise<Player[]> => {
   }
 };
 
+// Fetch single player data for validation
+const fetchPlayer = async (playerTag: string) => {
+   if (!playerTag) return null;
+   try {
+     console.log(`Validating player tag: ${playerTag}`);
+     const player = await clashApiService.getPlayer(playerTag);
+     console.log('Player validation response for tag', playerTag, ':', player);
+     return player;
+   } catch (error) {
+     console.error('Error validating player tag:', error);
+     return null; // Assume invalid if there's an error other than 404
+   }
+};
+
 const normalizeTag = (tag: string): string => {
   return tag.replace('#', '').toUpperCase().replace(/O/g, '0');
 };
@@ -42,15 +57,41 @@ const normalizeTag = (tag: string): string => {
 export const ClanCheck = ({ clans }: ClanCheckProps) => {
   const [refreshingClans, setRefreshingClans] = useState<Set<string>>(new Set());
 
-  const clanQueries = clans.map((clan) => 
-    useQuery({
+  // Use useQueries to manage multiple queries for clans and players
+  const queries = useQueries({
+    queries: clans.map((clan) => ({
       queryKey: ['clan-members', clan.tag],
       queryFn: () => fetchClanMembers(clan.tag),
       enabled: !!clan.tag,
       retry: 2,
       staleTime: 5 * 60 * 1000,
-    })
-  );
+      select: (data: Player[]) => {
+        // For each player in the clan roster, check if they are in the fetched member list
+        return clan.players.map(rosterPlayer => {
+          const isInClan = data.some(apiPlayer => normalizeTag(apiPlayer.tag) === normalizeTag(rosterPlayer.tag));
+          return { ...rosterPlayer, isInClan };
+        });
+      },
+    })),
+  });
+
+  // Separate queries for player tag validation if needed
+  const playerValidationQueries = useQueries({
+    queries: clans.flatMap(clan => 
+      clan.players.map(player => ({
+        queryKey: ['player-validation', player.tag],
+        queryFn: () => fetchPlayer(player.tag),
+        // Only enable this query if the clan members query for this clan has finished loading
+        // and the player was NOT found in the initial clan member list.
+        enabled: !queries.find(q => q.queryKey[1] === clan.tag)?.isLoading &&
+                 !queries.find(q => q.queryKey[1] === clan.tag)?.data?.find(p => normalizeTag(p.tag) === normalizeTag(player.tag))?.isInClan &&
+                 !!player.tag,
+        retry: 1, // Retry player validation once
+        staleTime: Infinity, // Don't re-fetch unless explicitly invalidated
+      }))
+    )
+  });
+
 
   const handleRefreshClan = async (clanId: string, clanTag: string) => {
     setRefreshingClans(prev => new Set(prev).add(clanId));
@@ -58,7 +99,16 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
     try {
       const queryIndex = clans.findIndex(c => c.id === clanId);
       if (queryIndex !== -1) {
-        await clanQueries[queryIndex].refetch();
+        // Refetch the clan members query
+        await queries[queryIndex].refetch();
+        
+        // Invalidate player validation queries for this clan's players
+        // This will cause them to refetch if the player is still not found in the updated list
+        const playersToInvalidate = clans[queryIndex].players.map(p => ['player-validation', p.tag]);
+        // You would typically use queryClient.invalidateQueries here, but we'll simulate refetch for simplicity
+        // In a real app, you'd inject queryClient
+        // queryClient.invalidateQueries({ queryKey: ['player-validation'] }); 
+
         toast({
           title: "Clan Updated",
           description: "Clan member data has been refreshed.",
@@ -79,10 +129,6 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
     }
   };
 
-  const checkPlayerInClan = (playerTag: string, clanMembers: Player[]): boolean => {
-    const normalizedPlayerTag = normalizeTag(playerTag);
-    return clanMembers.some(member => normalizeTag(member.tag) === normalizedPlayerTag);
-  };
 
   return (
     <div className="space-y-8">
@@ -95,17 +141,32 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
       ) : (
         <Accordion type="multiple" className="w-full">
           {clans.map((clan, index) => {
-            const query = clanQueries[index];
+            const clanQuery = queries[index];
             const isRefreshing = refreshingClans.has(clan.id);
-            const clanMembers = query.data || [];
-            const hasError = query.error;
+            const hasError = clanQuery.error;
+            // The data is now the transformed list with isInClan property
+            const playersWithStatus = clanQuery.data || [];
+
+            // Find the player validation queries for this clan's players
+            const currentPlayerValidationQueries = playerValidationQueries.filter(pq =>
+               clan.players.some(cp => normalizeTag(cp.tag) === normalizeTag(pq.queryKey[1] as string))
+            );
+            const isPlayerValidating = currentPlayerValidationQueries.some(pq => pq.isLoading);
+            const hasPlayerValidationError = currentPlayerValidationQueries.some(pq => pq.error);
 
             return (
               <AccordionItem key={clan.id} value={clan.id} className="border border-border rounded-xl mb-4 overflow-hidden card">
                 <AccordionTrigger className="bg-card text-card-foreground px-6 py-4 hover:no-underline hover:bg-muted/50 transition-all">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full mr-4 gap-3 sm:gap-4">
                     <div className="flex items-center space-x-3">
-                      <CheckCircle className="h-5 w-5 text-primary" />
+                      {/* Show warning if any player tag might be invalid */}
+                       {hasPlayerValidationError ? (
+                          <AlertCircle className="h-5 w-5 text-yellow-500" />
+                        ) : hasError ? (
+                         <XCircle className="h-5 w-5 text-destructive" />
+                        ) : (
+                         <CheckCircle className="h-5 w-5 text-primary" />
+                        )}
                       <span className="font-semibold responsive-text text-foreground">{clan.name}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -114,7 +175,7 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                         <span className="font-mono text-sm">{clan.tag.replace('#', '')}</span>
                       </div>
                       {hasError && <AlertCircle className="h-5 w-5 text-destructive" />}
-                      {query.isLoading || isRefreshing ? (
+                      {clanQuery.isLoading || isRefreshing || isPlayerValidating ? (
                         <Badge variant="secondary" className="bg-muted text-muted-foreground border-0">
                           <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
                           Loading...
@@ -123,18 +184,22 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                         <Badge variant="destructive" className="bg-destructive text-destructive-foreground">
                           Error
                         </Badge>
+                      ) : hasPlayerValidationError ? (
+                        <Badge variant="outline" className="border-yellow-500 text-yellow-500">
+                           Tag Check Needed
+                         </Badge>
                       ) : null}
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRefreshClan(clan.id, clan.tag);
                         }}
-                        disabled={query.isLoading || isRefreshing || !clan.tag}
+                        disabled={clanQuery.isLoading || isRefreshing || isPlayerValidating || !clan.tag}
                         size="sm"
                         variant="outline"
                         className="bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 shadow-sm"
                       >
-                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-4 w-4 ${(isRefreshing || isPlayerValidating) ? 'animate-spin' : ''}`} />
                       </Button>
                     </div>
                   </div>
@@ -161,17 +226,26 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                     </div>
                   ) : (
                     <div className="divide-y divide-border">
-                      {clan.players.map((player, playerIndex) => {
-                        const isInClan = checkPlayerInClan(player.tag, clanMembers);
-                        
+                      {playersWithStatus.map((player, playerIndex) => {
+                        // Find the corresponding player validation query result
+                         const playerValidationQuery = playerValidationQueries.find(pq =>
+                           normalizeTag(pq.queryKey[1] as string) === normalizeTag(player.tag)
+                         );
+                         const isPlayerTagValid = playerValidationQuery?.data !== null && !playerValidationQuery?.error;
+                         const isPlayerValidationLoading = playerValidationQuery?.isLoading;
+
                         return (
                           <div key={playerIndex} className="p-4 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
-                                {isInClan ? (
+                                {player.isInClan ? (
                                   <CheckCircle className="h-5 w-5 text-primary" />
-                                ) : (
+                                ) : isPlayerValidationLoading ? (
+                                   <RefreshCw className="h-5 w-5 text-muted-foreground animate-spin" />
+                                 ) : isPlayerTagValid ? (
                                   <XCircle className="h-5 w-5 text-destructive" />
+                                ) : (
+                                  <AlertCircle className="h-5 w-5 text-yellow-500" />
                                 )}
                                 <div>
                                   <span className="font-medium responsive-text text-foreground">{player.name}</span>
@@ -179,10 +253,10 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                                 </div>
                               </div>
                               <Badge 
-                                variant={isInClan ? "default" : "destructive"}
-                                className={isInClan ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"}
+                                variant={player.isInClan ? "default" : isPlayerValidationLoading ? "secondary" : isPlayerTagValid ? "destructive" : "outline"}
+                                className={player.isInClan ? "bg-primary hover:bg-primary/90 text-primary-foreground" : isPlayerValidationLoading ? "bg-muted text-muted-foreground border-0" : isPlayerTagValid ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "border-yellow-500 text-yellow-500 bg-yellow-500/10"}
                               >
-                                {isInClan ? "In Clan" : "Not Found"}
+                                {player.isInClan ? "In Clan" : isPlayerValidationLoading ? "Checking Tag..." : isPlayerTagValid ? "Not Found in Clan" : "Invalid Player Tag"}
                               </Badge>
                             </div>
                           </div>

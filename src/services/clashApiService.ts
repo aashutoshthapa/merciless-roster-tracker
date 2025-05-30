@@ -45,6 +45,25 @@ interface ClashApiResponse {
   };
 }
 
+// Define a basic interface for player data when fetching a single player
+interface SinglePlayerResponse {
+  tag: string;
+  name: string;
+  townHallLevel: number;
+  expLevel: number;
+  trophies: number;
+  role?: string; // Role is optional for single player lookup
+  league?: {
+    name: string;
+    iconUrls: {
+      small: string;
+      tiny: string;
+      medium: string;
+    };
+  };
+  // Add other relevant fields if needed
+}
+
 class ClashApiService {
   // We no longer need fetchWithAuth as the function handles auth
   // private async fetchWithAuth(url: string): Promise<Response> {
@@ -60,8 +79,8 @@ class ClashApiService {
     try {
       // Remove the # from the clan tag if it exists (the function expects it this way)
       const formattedTag = clanTag.startsWith('#') ? clanTag.substring(1) : clanTag;
-      // Call the Netlify Function endpoint with the clan tag as a query parameter
-      const url = `${API_BASE_URL}/getClanMembers?tag=${formattedTag}`;
+      // Call the Netlify Function with endpoint 'members'
+      const url = `${API_BASE_URL}/clashApiProxy?endpoint=members&tag=${formattedTag}`;
       
       // Use a regular fetch as the function handles the authorization header
       const response = await fetch(url);
@@ -69,7 +88,7 @@ class ClashApiService {
       if (!response.ok) {
         // The function will return the API error status and body
         const errorData = await response.json();
-        throw new Error(`API request failed with status ${response.status}: ${errorData.message || JSON.stringify(errorData)}`);
+        throw new Error(`Clan members API request failed with status ${response.status}: ${errorData.message || JSON.stringify(errorData)}`);
       }
 
       const data: ClashApiResponse = await response.json();
@@ -93,6 +112,32 @@ class ClashApiService {
     } catch (error) {
       console.error('Error fetching clan members:', error);
       throw error;
+    }
+  }
+
+  async getPlayer(playerTag: string): Promise<SinglePlayerResponse | null> {
+    try {
+      const formattedTag = playerTag.startsWith('#') ? playerTag.substring(1) : playerTag;
+       // Call the Netlify Function with endpoint 'player'
+      const url = `${API_BASE_URL}/clashApiProxy?endpoint=player&tag=${formattedTag}`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        // If the status is 404 (Not Found), it means the player tag is likely invalid
+        if (response.status === 404) {
+          console.warn(`Player tag not found: ${playerTag}`);
+          return null; // Return null for invalid tags
+        }
+        const errorData = await response.json();
+        throw new Error(`Player API request failed with status ${response.status}: ${errorData.message || JSON.stringify(errorData)}`);
+      }
+
+      const data: SinglePlayerResponse = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching player data:', error);
+      throw error; // Re-throw other errors
     }
   }
 }
