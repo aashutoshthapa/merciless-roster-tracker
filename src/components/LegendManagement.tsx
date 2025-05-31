@@ -78,31 +78,62 @@ export const LegendManagement = () => {
 
       console.log('Player to delete:', verifyData);
 
-      // Attempt the delete
-      const { error: deleteError } = await supabase
+      // Log the current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Current session:', session);
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+      }
+
+      // Attempt the delete with explicit error handling
+      const { data: deleteData, error: deleteError } = await supabase
         .from('legend_players')
         .delete()
-        .eq('id', playerId);
+        .eq('id', playerId)
+        .select();
 
       if (deleteError) {
-        console.error('Delete error:', deleteError);
+        console.error('Delete error:', {
+          message: deleteError.message,
+          details: deleteError.details,
+          hint: deleteError.hint,
+          code: deleteError.code
+        });
         throw deleteError;
       }
 
-      console.log('Delete operation completed');
+      console.log('Delete response:', deleteData);
 
-      // Update local state immediately
-      setPlayers(prevPlayers => prevPlayers.filter(p => p.id !== playerId));
+      // Verify deletion immediately
+      const { data: verifyDelete, error: verifyDeleteError } = await supabase
+        .from('legend_players')
+        .select('*')
+        .eq('id', playerId)
+        .single();
 
-      toast({
-        title: "Success",
-        description: "Player removed from tracking",
-      });
+      if (verifyDeleteError && verifyDeleteError.code === 'PGRST116') {
+        console.log('Deletion verified - player no longer exists');
+        // Update local state
+        setPlayers(prevPlayers => prevPlayers.filter(p => p.id !== playerId));
+        toast({
+          title: "Success",
+          description: "Player removed from tracking",
+        });
+      } else {
+        console.error('Deletion verification failed:', verifyDeleteError);
+        console.log('Player still exists:', verifyDelete);
+        throw new Error('Failed to verify player deletion');
+      }
 
       // Refresh the list to ensure consistency
       await fetchPlayers();
     } catch (error: any) {
-      console.error('Error deleting player:', error);
+      console.error('Error deleting player:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       toast({
         title: "Error",
         description: error.message || "Failed to remove player",
