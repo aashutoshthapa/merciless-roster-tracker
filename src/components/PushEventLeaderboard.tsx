@@ -74,13 +74,15 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
           console.log('Updating player', player.player_name, 'with trophies:', playerData.trophies);
           
           // Update the player's data in Supabase
-          const { error: updateError } = await supabase
+          const { data: updateData, error: updateError } = await supabase
             .from('legend_players')
             .update({
               player_name: playerData.name,
-              trophies: playerData.trophies
+              trophies: playerData.trophies,
+              updated_at: new Date().toISOString()
             })
-            .eq('player_tag', player.player_tag);
+            .eq('player_tag', player.player_tag)
+            .select();
 
           if (updateError) {
             console.error(`Error updating player ${player.player_name}:`, updateError);
@@ -96,6 +98,9 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
               console.error(`Error verifying update for ${player.player_name}:`, verifyError);
             } else {
               console.log('Verification - Player in database:', updatedPlayer);
+              if (updatedPlayer.trophies !== playerData.trophies) {
+                console.error(`Trophy count mismatch! Expected ${playerData.trophies} but got ${updatedPlayer.trophies}`);
+              }
             }
             console.log('Successfully updated player', player.player_name);
           }
