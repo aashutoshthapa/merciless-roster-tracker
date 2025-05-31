@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Users, Trash2, Plus, ArrowLeft, Save, Edit2, FileText } from 'lucide-react';
 import { AdminLogin } from '@/components/AdminLogin';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { toast } from '@/hooks/use-toast';
 import { clanDataService, type Player, type Clan } from '@/services/clanDataService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -338,10 +338,9 @@ const AdminPanel = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="settings" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="settings">App Settings</TabsTrigger>
             <TabsTrigger value="clans">Manage Clans</TabsTrigger>
-            <TabsTrigger value="players">Manage Players</TabsTrigger>
             <TabsTrigger value="legends">Manage Legends</TabsTrigger>
           </TabsList>
 
@@ -639,10 +638,6 @@ const AdminPanel = () => {
                 ))}
               </Accordion>
             </div>
-          </TabsContent>
-
-          <TabsContent value="players">
-            {/* ... existing players content ... */}
           </TabsContent>
 
           <TabsContent value="legends">

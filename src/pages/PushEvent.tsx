@@ -1,13 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft } from 'lucide-react';
 import { PushEventForm } from '@/components/PushEventForm';
 import { PushEventLeaderboard } from '@/components/PushEventLeaderboard';
+import { EODLeaderboard } from '@/components/EODLeaderboard';
 
 const PushEvent = () => {
+  const navigate = useNavigate();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handlePlayerAdded = () => {
@@ -21,56 +23,47 @@ const PushEvent = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <img src="/images/archer-queen.png" alt="Archer Queen" className="h-10 w-10" />
-              <div>
-                <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-                  <Trophy className="h-8 w-8 text-yellow-500" />
-                  PUSH EVENT
-                </h1>
-                <p className="text-muted-foreground">Trophy Push Tracking</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <Link to="/">
-                <Button 
-                  variant="outline" 
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                >
-                  Back to Home
-                </Button>
-              </Link>
-              <Link to="/admin">
-                <Button 
-                  variant="outline" 
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                >
-                  Admin Panel
-                </Button>
-              </Link>
+              <Button
+                onClick={() => navigate('/')}
+                variant="outline"
+                size="sm"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Button>
+              <h1 className="text-2xl font-bold text-foreground">Push Event</h1>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto p-8 space-y-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            Join the Trophy Push Competition
-          </h2>
-          <p className="text-muted-foreground">
-            Track your progress and compete with other players for the highest trophy count!
-          </p>
-        </div>
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Registration Form */}
+          <div className="lg:col-span-1">
+            <PushEventForm onPlayerAdded={handlePlayerAdded} />
+          </div>
 
-        {/* Sign-up Form */}
-        <div className="flex justify-center">
-          <PushEventForm onPlayerAdded={handlePlayerAdded} />
-        </div>
+          {/* Leaderboards */}
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="live" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-8">
+                <TabsTrigger value="live">Live Leaderboard</TabsTrigger>
+                <TabsTrigger value="eod">Last EOD Leaderboard</TabsTrigger>
+              </TabsList>
 
-        {/* Leaderboard */}
-        <PushEventLeaderboard refreshTrigger={refreshTrigger} />
+              <TabsContent value="live">
+                <PushEventLeaderboard refreshTrigger={refreshTrigger} />
+              </TabsContent>
+
+              <TabsContent value="eod">
+                <EODLeaderboard />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </main>
     </div>
   );
