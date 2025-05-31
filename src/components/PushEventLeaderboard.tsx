@@ -68,6 +68,7 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
       for (const player of currentPlayers) {
         try {
           const playerData = await fetchPlayerData(player.player_tag);
+          console.log('Updating player', player.player_name, 'with trophies:', playerData.trophies);
           
           // Update the player's data in Supabase
           const { error: updateError } = await supabase
@@ -80,6 +81,8 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
 
           if (updateError) {
             console.error(`Error updating player ${player.player_name}:`, updateError);
+          } else {
+            console.log('Successfully updated player', player.player_name);
           }
         } catch (error) {
           console.error(`Error fetching data for player ${player.player_name}:`, error);
