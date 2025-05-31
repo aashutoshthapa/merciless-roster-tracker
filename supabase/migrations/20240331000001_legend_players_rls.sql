@@ -16,8 +16,13 @@ CREATE POLICY "Allow public to insert legend players"
     ON legend_players FOR INSERT
     WITH CHECK (true);
 
--- Only allow authenticated users to delete
+-- Allow authenticated users to delete
 CREATE POLICY "Allow authenticated users to delete legend players"
     ON legend_players FOR DELETE
-    TO authenticated
-    USING (true); 
+    USING (auth.role() = 'authenticated');
+
+-- Allow authenticated users to update
+CREATE POLICY "Allow authenticated users to update legend players"
+    ON legend_players FOR UPDATE
+    USING (auth.role() = 'authenticated')
+    WITH CHECK (auth.role() = 'authenticated'); 
