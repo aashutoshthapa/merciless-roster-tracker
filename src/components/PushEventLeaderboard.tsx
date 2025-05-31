@@ -40,15 +40,18 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
   const { data: players = [], isLoading, refetch } = useQuery({
     queryKey: ['legend-players', refreshTrigger],
     queryFn: async () => {
+      console.log('Fetching players for display...');
       const { data, error } = await supabase
         .from('legend_players')
         .select('*')
         .order('trophies', { ascending: false });
 
       if (error) {
+        console.error('Error fetching players:', error);
         throw error;
       }
 
+      console.log('Fetched players for display:', data);
       return data || [];
     },
     staleTime: 0, // Always consider the data stale to allow immediate refreshes
@@ -82,6 +85,18 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
           if (updateError) {
             console.error(`Error updating player ${player.player_name}:`, updateError);
           } else {
+            // Verify the update by fetching the player's data again
+            const { data: updatedPlayer, error: verifyError } = await supabase
+              .from('legend_players')
+              .select('*')
+              .eq('player_tag', player.player_tag)
+              .single();
+
+            if (verifyError) {
+              console.error(`Error verifying update for ${player.player_name}:`, verifyError);
+            } else {
+              console.log('Verification - Player in database:', updatedPlayer);
+            }
             console.log('Successfully updated player', player.player_name);
           }
         } catch (error) {
