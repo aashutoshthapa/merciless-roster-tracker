@@ -1,18 +1,28 @@
 -- Enable the pg_cron extension
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
--- Create a cron job to run the EOD recording function daily at 4:55 UTC
+-- Create a function to record EOD data
+CREATE OR REPLACE FUNCTION record_eod_data()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Insert current player data into eod_records
+  INSERT INTO eod_records (records)
+  SELECT jsonb_agg(
+    jsonb_build_object(
+      'player_tag', player_tag,
+      'trophies', trophies
+    )
+  )
+  FROM legend_players;
+END;
+$$;
+
+-- Schedule the function to run daily at 4:55 UTC
 SELECT cron.schedule(
   'record-eod-daily',
   '55 4 * * *',  -- Run at 4:55 UTC every day (10:40 AM Nepal time)
-  $$
-  SELECT
-    net.http_post(
-      url := CONCAT(current_setting('app.settings.pgrest_url'), '/functions/v1/record-eod'),
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json',
-        'Authorization', CONCAT('Bearer ', current_setting('app.settings.service_role_key'))
-      )
-    ) AS request_id;
-  $$
+  'SELECT record_eod_data();'
 ); 
