@@ -23,12 +23,17 @@ export const LegendManagement = () => {
 
   const fetchPlayers = async () => {
     try {
+      console.log('Fetching players...');
       const { data, error } = await supabase
         .from('legend_players')
         .select('*')
         .order('trophies', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in fetchPlayers:', error);
+        throw error;
+      }
+      console.log('Fetched players:', data);
       setPlayers(data || []);
     } catch (error) {
       console.error('Error fetching players:', error);
@@ -43,7 +48,11 @@ export const LegendManagement = () => {
   };
 
   const deletePlayer = async (playerId: string) => {
+    console.log('Delete attempt for player ID:', playerId);
+    console.log('Current user:', user);
+
     if (!user) {
+      console.log('No user found, deletion cancelled');
       toast({
         title: "Error",
         description: "You must be logged in to delete players",
@@ -53,25 +62,39 @@ export const LegendManagement = () => {
     }
 
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete player...');
+      const { data, error } = await supabase
         .from('legend_players')
         .delete()
-        .eq('id', playerId);
+        .eq('id', playerId)
+        .select();
 
       if (error) {
-        console.error('Delete error:', error);
+        console.error('Delete error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
 
+      console.log('Delete response:', data);
       toast({
         title: "Success",
         description: "Player removed from tracking",
       });
 
       // Refresh the list
+      console.log('Refreshing player list...');
       await fetchPlayers();
     } catch (error: any) {
-      console.error('Error deleting player:', error);
+      console.error('Error deleting player:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       toast({
         title: "Error",
         description: error.message || "Failed to remove player",
@@ -82,6 +105,7 @@ export const LegendManagement = () => {
 
   // Initial fetch
   useEffect(() => {
+    console.log('Component mounted, fetching initial data...');
     fetchPlayers();
   }, []);
 
@@ -130,7 +154,10 @@ export const LegendManagement = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => deletePlayer(player.id)}
+                    onClick={() => {
+                      console.log('Delete button clicked for player:', player);
+                      deletePlayer(player.id);
+                    }}
                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
