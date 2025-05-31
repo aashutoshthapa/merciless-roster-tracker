@@ -51,8 +51,22 @@ export const LegendManagement = () => {
     console.log('Delete attempt for player ID:', playerId);
     console.log('Current user:', user);
 
-    if (!user) {
-      console.log('No user found, deletion cancelled');
+    // Check for active session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log('Current session:', session);
+
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      toast({
+        title: "Error",
+        description: "Authentication error. Please try logging in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!session) {
+      console.log('No active session found');
       toast({
         title: "Error",
         description: "You must be logged in to delete players",
@@ -77,13 +91,6 @@ export const LegendManagement = () => {
       }
 
       console.log('Player to delete:', verifyData);
-
-      // Log the current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Current session:', session);
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-      }
 
       // Attempt the delete with explicit error handling
       const { data: deleteData, error: deleteError } = await supabase
