@@ -130,13 +130,14 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-2xl font-bold text-foreground">Leaderboard</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">Leaderboard</CardTitle>
         <Button
           variant="outline"
           size="icon"
           onClick={handleRefresh}
           disabled={isLoading || isRefreshing}
+          className="h-8 w-8 sm:h-10 sm:w-10"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </Button>
@@ -149,26 +150,26 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
             No players tracked yet. Be the first to join!
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {players.map((player, index) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-card border"
+                className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-card border"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="text-2xl font-bold text-muted-foreground w-8">
+                <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold text-muted-foreground w-6 sm:w-8 flex-shrink-0">
                     #{index + 1}
                   </div>
-                  <div>
-                    <div className="text-xl font-bold text-foreground">
+                  <div className="min-w-0">
+                    <div className="text-base sm:text-xl font-bold text-foreground truncate">
                       {player.player_name}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs sm:text-sm text-muted-foreground truncate">
                       {player.player_tag} • {player.discord_username}
                     </div>
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-yellow-500">
+                <div className="text-lg sm:text-2xl font-bold text-yellow-500 ml-2 sm:ml-4 flex-shrink-0">
                   {player.trophies.toLocaleString()}
                 </div>
               </div>
