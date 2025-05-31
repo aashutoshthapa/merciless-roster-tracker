@@ -1,3 +1,6 @@
+-- Enable the pg_cron extension
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
 -- Create a cron job to run the EOD recording function daily at 4:55 UTC
 SELECT cron.schedule(
   'record-eod-daily',
