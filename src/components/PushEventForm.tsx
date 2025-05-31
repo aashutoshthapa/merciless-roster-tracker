@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface PushEventFormProps {
   onPlayerAdded: () => void;
@@ -53,23 +54,17 @@ export const PushEventForm = ({ onPlayerAdded }: PushEventFormProps) => {
         return;
       }
 
-      // Fetch player data from Clash of Clans API
-      const cocApiUrl = `https://cocproxy.royaleapi.dev/v1/players/%23${sanitizedTag}`;
-      const cocResponse = await fetch(cocApiUrl, {
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_COC_API_TOKEN}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!cocResponse.ok) {
-        if (cocResponse.status === 404) {
+      // Fetch player data from Netlify Function
+      const response = await fetch(`/.netlify/functions/getPlayerData?tag=${sanitizedTag}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
           throw new Error('Player not found. Please check the tag and try again.');
         }
-        throw new Error('Failed to fetch player data from Clash of Clans API');
+        throw new Error('Failed to fetch player data');
       }
 
-      const playerData = await cocResponse.json();
+      const playerData = await response.json();
 
       // Insert the player into the database
       const { error: insertError } = await supabase
@@ -110,36 +105,38 @@ export const PushEventForm = ({ onPlayerAdded }: PushEventFormProps) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-center text-foreground">Join Push Event</CardTitle>
+        <CardTitle>Register for Push Event</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <Label htmlFor="playerTag">Player Tag</Label>
             <Input
-              type="text"
-              placeholder="Player Tag (e.g. #8VJLQPUYR)"
+              id="playerTag"
               value={playerTag}
               onChange={(e) => setPlayerTag(e.target.value)}
-              className="w-full"
+              placeholder="#PLAYERTAG"
+              disabled={isLoading}
             />
           </div>
           <div>
+            <Label htmlFor="discordUsername">Discord Username</Label>
             <Input
-              type="text"
-              placeholder="Discord Username (e.g. @king#1234)"
+              id="discordUsername"
               value={discordUsername}
               onChange={(e) => setDiscordUsername(e.target.value)}
-              className="w-full"
+              placeholder="discord_username"
+              disabled={isLoading}
             />
           </div>
           <Button 
             type="submit" 
-            className="w-full" 
+            className="w-full bg-primary hover:bg-primary/90"
             disabled={isLoading}
           >
-            {isLoading ? 'Tracking...' : 'Track'}
+            {isLoading ? 'Registering...' : 'Register'}
           </Button>
         </form>
       </CardContent>
