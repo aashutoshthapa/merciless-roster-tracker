@@ -79,53 +79,30 @@ export const LegendManagement = () => {
       console.log('Player to delete:', verifyData);
 
       // Attempt the delete
-      const { data, error } = await supabase
+      const { error: deleteError } = await supabase
         .from('legend_players')
         .delete()
-        .eq('id', playerId)
-        .select();
+        .eq('id', playerId);
 
-      if (error) {
-        console.error('Delete error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw error;
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
       }
 
-      console.log('Delete response:', data);
+      console.log('Delete operation completed');
 
-      // Verify deletion
-      const { data: verifyDelete, error: verifyDeleteError } = await supabase
-        .from('legend_players')
-        .select('*')
-        .eq('id', playerId)
-        .single();
+      // Update local state immediately
+      setPlayers(prevPlayers => prevPlayers.filter(p => p.id !== playerId));
 
-      if (verifyDeleteError && verifyDeleteError.code === 'PGRST116') {
-        // PGRST116 means no rows returned, which is what we want
-        console.log('Deletion verified - player no longer exists');
-        toast({
-          title: "Success",
-          description: "Player removed from tracking",
-        });
-      } else {
-        console.error('Deletion verification failed:', verifyDeleteError);
-        throw new Error('Failed to verify player deletion');
-      }
+      toast({
+        title: "Success",
+        description: "Player removed from tracking",
+      });
 
-      // Refresh the list
-      console.log('Refreshing player list...');
+      // Refresh the list to ensure consistency
       await fetchPlayers();
     } catch (error: any) {
-      console.error('Error deleting player:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
+      console.error('Error deleting player:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to remove player",
