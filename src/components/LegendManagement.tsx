@@ -51,22 +51,8 @@ export const LegendManagement = () => {
     console.log('Delete attempt for player ID:', playerId);
     console.log('Current user:', user);
 
-    // Check for active session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log('Current session:', session);
-
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-      toast({
-        title: "Error",
-        description: "Authentication error. Please try logging in again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!session) {
-      console.log('No active session found');
+    if (!user) {
+      console.log('No user found, deletion cancelled');
       toast({
         title: "Error",
         description: "You must be logged in to delete players",
@@ -78,26 +64,11 @@ export const LegendManagement = () => {
     try {
       console.log('Attempting to delete player...');
       
-      // First verify the player exists
-      const { data: verifyData, error: verifyError } = await supabase
-        .from('legend_players')
-        .select('*')
-        .eq('id', playerId)
-        .single();
-
-      if (verifyError) {
-        console.error('Error verifying player:', verifyError);
-        throw new Error('Could not verify player exists');
-      }
-
-      console.log('Player to delete:', verifyData);
-
       // Attempt the delete with explicit error handling
-      const { data: deleteData, error: deleteError } = await supabase
+      const { error: deleteError } = await supabase
         .from('legend_players')
         .delete()
-        .eq('id', playerId)
-        .select();
+        .eq('id', playerId);
 
       if (deleteError) {
         console.error('Delete error:', {
@@ -109,28 +80,14 @@ export const LegendManagement = () => {
         throw deleteError;
       }
 
-      console.log('Delete response:', deleteData);
-
-      // Verify deletion immediately
-      const { data: verifyDelete, error: verifyDeleteError } = await supabase
-        .from('legend_players')
-        .select('*')
-        .eq('id', playerId)
-        .single();
-
-      if (verifyDeleteError && verifyDeleteError.code === 'PGRST116') {
-        console.log('Deletion verified - player no longer exists');
-        // Update local state
-        setPlayers(prevPlayers => prevPlayers.filter(p => p.id !== playerId));
-        toast({
-          title: "Success",
-          description: "Player removed from tracking",
-        });
-      } else {
-        console.error('Deletion verification failed:', verifyDeleteError);
-        console.log('Player still exists:', verifyDelete);
-        throw new Error('Failed to verify player deletion');
-      }
+      console.log('Delete successful');
+      
+      // Update local state
+      setPlayers(prevPlayers => prevPlayers.filter(p => p.id !== playerId));
+      toast({
+        title: "Success",
+        description: "Player removed from tracking",
+      });
 
       // Refresh the list to ensure consistency
       await fetchPlayers();
