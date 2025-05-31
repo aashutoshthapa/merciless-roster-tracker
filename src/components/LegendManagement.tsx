@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trash2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LegendPlayer {
   id: string;
@@ -18,6 +19,7 @@ export const LegendManagement = () => {
   const [players, setPlayers] = useState<LegendPlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchPlayers = async () => {
     try {
@@ -41,13 +43,25 @@ export const LegendManagement = () => {
   };
 
   const deletePlayer = async (playerId: string) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to delete players",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('legend_players')
         .delete()
         .eq('id', playerId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -55,19 +69,19 @@ export const LegendManagement = () => {
       });
 
       // Refresh the list
-      fetchPlayers();
-    } catch (error) {
+      await fetchPlayers();
+    } catch (error: any) {
       console.error('Error deleting player:', error);
       toast({
         title: "Error",
-        description: "Failed to remove player",
+        description: error.message || "Failed to remove player",
         variant: "destructive",
       });
     }
   };
 
   // Initial fetch
-  useState(() => {
+  useEffect(() => {
     fetchPlayers();
   }, []);
 
