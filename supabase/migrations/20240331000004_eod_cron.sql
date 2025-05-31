@@ -1,7 +1,7 @@
--- Create a cron job to run the EOD recording function daily at 23:59 UTC
+-- Create a cron job to run the EOD recording function daily at 4:55 UTC
 SELECT cron.schedule(
   'record-eod-daily',
-  '59 23 * * *',  -- Run at 23:59 UTC every day
+  '55 4 * * *',  -- Run at 4:55 UTC every day (10:40 AM Nepal time)
   $$
   SELECT
     net.http_post(
