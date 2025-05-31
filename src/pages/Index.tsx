@@ -65,6 +65,14 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle />
+              <Link to="/push-event">
+                <Button 
+                  variant="outline" 
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  Push Event
+                </Button>
+              </Link>
               <Link to="/admin">
                 <Button 
                   variant="outline" 

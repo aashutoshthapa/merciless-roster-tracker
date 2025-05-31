@@ -1,0 +1,132 @@
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Trash2, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface LegendPlayer {
+  id: string;
+  player_name: string;
+  player_tag: string;
+  trophies: number;
+  discord_username: string;
+  created_at: string;
+}
+
+export const LegendManagement = () => {
+  const [players, setPlayers] = useState<LegendPlayer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchPlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('legend_players')
+        .select('*')
+        .order('trophies', { ascending: false });
+
+      if (error) throw error;
+      setPlayers(data || []);
+    } catch (error) {
+      console.error('Error fetching players:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load legend players",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deletePlayer = async (playerId: string) => {
+    try {
+      const { error } = await supabase
+        .from('legend_players')
+        .delete()
+        .eq('id', playerId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Player removed from tracking",
+      });
+
+      // Refresh the list
+      fetchPlayers();
+    } catch (error) {
+      console.error('Error deleting player:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove player",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Initial fetch
+  useState(() => {
+    fetchPlayers();
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-2xl font-bold text-foreground">Legend Players</CardTitle>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={fetchPlayers}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-8">Loading...</div>
+        ) : players.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No players tracked yet
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {players.map((player) => (
+              <div
+                key={player.id}
+                className="flex items-center justify-between p-4 rounded-lg bg-card border"
+              >
+                <div>
+                  <div className="text-xl font-bold text-foreground">
+                    {player.player_name}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {player.player_tag} • {player.discord_username}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Joined: {new Date(player.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-2xl font-bold text-yellow-500">
+                    {player.trophies.toLocaleString()}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deletePlayer(player.id)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}; 
