@@ -60,36 +60,24 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
 
       if (error) throw error;
 
-      // Fetch latest trophy counts for each player
-      const updatedPlayers = await Promise.all(
-        currentPlayers.map(async (player) => {
-          try {
-            const playerData = await fetchPlayerData(player.player_tag);
-            return {
-              ...player,
-              trophies: playerData.trophies,
-            };
-          } catch (error) {
-            console.error(`Error fetching data for player ${player.player_name}:`, error);
-            return player; // Keep existing data if fetch fails
+      // Update each player one by one
+      for (const player of currentPlayers) {
+        try {
+          const playerData = await fetchPlayerData(player.player_tag);
+          
+          // Update the player's trophy count
+          const { error: updateError } = await supabase
+            .from('legend_players')
+            .update({ trophies: playerData.trophies })
+            .eq('id', player.id);
+
+          if (updateError) {
+            console.error(`Error updating player ${player.player_name}:`, updateError);
           }
-        })
-      );
-
-      // Update all players in Supabase
-      const { error: updateError } = await supabase
-        .from('legend_players')
-        .upsert(
-          updatedPlayers.map(({ id, player_name, player_tag, trophies, discord_username }) => ({
-            id,
-            player_name,
-            player_tag,
-            trophies,
-            discord_username,
-          }))
-        );
-
-      if (updateError) throw updateError;
+        } catch (error) {
+          console.error(`Error fetching data for player ${player.player_name}:`, error);
+        }
+      }
 
       // Refetch the data to update the UI
       await refetch();
