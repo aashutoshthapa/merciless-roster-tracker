@@ -60,16 +60,19 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
 
       if (error) throw error;
 
-      // Update each player one by one
+      // Update each player's data
       for (const player of currentPlayers) {
         try {
           const playerData = await fetchPlayerData(player.player_tag);
           
-          // Update the player's trophy count
+          // Update the player's data in Supabase
           const { error: updateError } = await supabase
             .from('legend_players')
-            .update({ trophies: playerData.trophies })
-            .eq('id', player.id);
+            .update({
+              player_name: playerData.name,
+              trophies: playerData.trophies
+            })
+            .eq('player_tag', player.player_tag);
 
           if (updateError) {
             console.error(`Error updating player ${player.player_name}:`, updateError);
