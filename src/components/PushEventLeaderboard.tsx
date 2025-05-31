@@ -19,6 +19,18 @@ interface PushEventLeaderboardProps {
   refreshTrigger: number;
 }
 
+const fetchPlayerData = async (playerTag: string) => {
+  const formattedTag = playerTag.startsWith('#') ? playerTag.substring(1) : playerTag;
+  const response = await fetch(`/.netlify/functions/getPlayerData?tag=${formattedTag}`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch player data');
+  }
+  
+  const data = await response.json();
+  return data;
+};
+
 export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardProps) => {
   const { toast } = useToast();
 
@@ -41,7 +53,47 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
 
   const handleRefresh = async () => {
     try {
+      // First, get the current players from Supabase
+      const { data: currentPlayers, error } = await supabase
+        .from('legend_players')
+        .select('*');
+
+      if (error) throw error;
+
+      // Fetch latest trophy counts for each player
+      const updatedPlayers = await Promise.all(
+        currentPlayers.map(async (player) => {
+          try {
+            const playerData = await fetchPlayerData(player.player_tag);
+            return {
+              ...player,
+              trophies: playerData.trophies,
+            };
+          } catch (error) {
+            console.error(`Error fetching data for player ${player.player_name}:`, error);
+            return player; // Keep existing data if fetch fails
+          }
+        })
+      );
+
+      // Update all players in Supabase
+      const { error: updateError } = await supabase
+        .from('legend_players')
+        .upsert(
+          updatedPlayers.map(({ id, player_name, player_tag, trophies, discord_username }) => ({
+            id,
+            player_name,
+            player_tag,
+            trophies,
+            discord_username,
+          }))
+        );
+
+      if (updateError) throw updateError;
+
+      // Refetch the data to update the UI
       await refetch();
+      
       toast({
         title: "Success",
         description: "Leaderboard refreshed successfully",
