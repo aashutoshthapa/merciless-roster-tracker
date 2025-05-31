@@ -32,7 +32,14 @@ const PushEvent = () => {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
-              <h1 className="text-2xl font-bold text-foreground">Push Event</h1>
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="https://cdn-assets-eu.frontify.com/s3/frontify-enterprise-files-eu/eyJwYXRoIjoic3VwZXJjZWxsXC9maWxlXC8xNks2QlQ0UTNLeXBXUW96M2F2WS5wbmcifQ:supercell:Ql-xSkhbxiyx1hTmHLGlgePnfyquCFJA0Sk4hYz8wH4?width=2400" 
+                  alt="Legend Trophy" 
+                  className="h-12 w-12 object-contain"
+                />
+                <h1 className="text-2xl font-bold text-foreground">Push Event</h1>
+              </div>
             </div>
           </div>
         </div>

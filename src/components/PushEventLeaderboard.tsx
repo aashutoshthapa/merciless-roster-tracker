@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
@@ -19,34 +20,41 @@ interface PushEventLeaderboardProps {
 }
 
 export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardProps) => {
-  const [players, setPlayers] = useState<LegendPlayer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchPlayers = async () => {
-    try {
+  const { data: players = [], isLoading, refetch } = useQuery({
+    queryKey: ['legend-players', refreshTrigger],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('legend_players')
         .select('*')
         .order('trophies', { ascending: false });
 
-      if (error) throw error;
-      setPlayers(data || []);
+      if (error) {
+        throw error;
+      }
+
+      return data || [];
+    },
+    staleTime: 0, // Always consider the data stale to allow immediate refreshes
+  });
+
+  const handleRefresh = async () => {
+    try {
+      await refetch();
+      toast({
+        title: "Success",
+        description: "Leaderboard refreshed successfully",
+      });
     } catch (error) {
-      console.error('Error fetching players:', error);
+      console.error('Error refreshing leaderboard:', error);
       toast({
         title: "Error",
-        description: "Failed to load leaderboard",
+        description: "Failed to refresh leaderboard",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchPlayers();
-  }, [refreshTrigger]);
 
   return (
     <Card>
@@ -55,7 +63,7 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
         <Button
           variant="outline"
           size="icon"
-          onClick={fetchPlayers}
+          onClick={handleRefresh}
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
