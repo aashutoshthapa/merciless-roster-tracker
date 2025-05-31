@@ -25,4 +25,7 @@ SELECT cron.schedule(
   'record-eod-daily',
   '55 4 * * *',  -- Run at 4:55 UTC every day (10:40 AM Nepal time)
   'SELECT record_eod_data();'
-); 
+);
+
+-- Show all current schedules
+SELECT * FROM cron.job; 
