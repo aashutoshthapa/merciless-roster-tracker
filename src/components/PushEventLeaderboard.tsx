@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ interface PushEventLeaderboardProps {
 
 const fetchPlayerData = async (playerTag: string) => {
   const formattedTag = playerTag.startsWith('#') ? playerTag.substring(1) : playerTag;
+  console.log('Fetching player data for tag:', formattedTag);
   const response = await fetch(`/.netlify/functions/getPlayerData?tag=${formattedTag}`);
   
   if (!response.ok) {
@@ -28,11 +29,13 @@ const fetchPlayerData = async (playerTag: string) => {
   }
   
   const data = await response.json();
+  console.log('API response for player', formattedTag, ':', data);
   return data;
 };
 
 export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardProps) => {
   const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data: players = [], isLoading, refetch } = useQuery({
     queryKey: ['legend-players', refreshTrigger],
@@ -52,6 +55,7 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
   });
 
   const handleRefresh = async () => {
+    setIsRefreshing(true);
     try {
       // First, get the current players from Supabase
       const { data: currentPlayers, error } = await supabase
@@ -96,6 +100,8 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
         description: "Failed to refresh leaderboard",
         variant: "destructive",
       });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -107,13 +113,13 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
           variant="outline"
           size="icon"
           onClick={handleRefresh}
-          disabled={isLoading}
+          disabled={isLoading || isRefreshing}
         >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </Button>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoading || isRefreshing ? (
           <div className="text-center py-8">Loading...</div>
         ) : players.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
