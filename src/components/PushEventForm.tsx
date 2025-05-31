@@ -37,11 +37,11 @@ export const PushEventForm = ({ onPlayerAdded }: PushEventFormProps) => {
       // Check if player is already tracked
       const { data: existingPlayer, error: checkError } = await supabase
         .from('legend_players')
-        .select('player_name')
+        .select('*')
         .eq('player_tag', sanitizedTag)
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
+      if (checkError) {
         throw new Error('Database error');
       }
 
