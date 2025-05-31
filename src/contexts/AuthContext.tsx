@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface AuthContextType {
@@ -22,6 +21,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<{ email: string } | null>(null);
 
+  // Check for session expiration
+  useEffect(() => {
+    const checkSessionExpiration = () => {
+      const auth = localStorage.getItem('cwl_admin_auth');
+      const loginTime = localStorage.getItem('cwl_admin_login_time');
+      
+      if (auth === 'true' && loginTime) {
+        const loginTimestamp = parseInt(loginTime, 10);
+        const currentTime = Date.now();
+        const oneDayInMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        
+        if (currentTime - loginTimestamp > oneDayInMs) {
+          // Session expired
+          setIsAuthenticated(false);
+          setUser(null);
+          localStorage.removeItem('cwl_admin_auth');
+          localStorage.removeItem('cwl_admin_user');
+          localStorage.removeItem('cwl_admin_login_time');
+        }
+      }
+    };
+
+    // Check immediately
+    checkSessionExpiration();
+
+    // Set up interval to check every minute
+    const intervalId = setInterval(checkSessionExpiration, 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   useEffect(() => {
     const auth = localStorage.getItem('cwl_admin_auth');
     const userEmail = localStorage.getItem('cwl_admin_user');
@@ -37,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser({ email });
       localStorage.setItem('cwl_admin_auth', 'true');
       localStorage.setItem('cwl_admin_user', email);
+      localStorage.setItem('cwl_admin_login_time', Date.now().toString());
       return true;
     }
     return false;
@@ -47,6 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     localStorage.removeItem('cwl_admin_auth');
     localStorage.removeItem('cwl_admin_user');
+    localStorage.removeItem('cwl_admin_login_time');
   };
 
   return (
