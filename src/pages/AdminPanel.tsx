@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Users, Trash2, Plus, ArrowLeft, Save, Edit2, FileText } from 'lucide-react';
 import { AdminLogin } from '@/components/AdminLogin';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from '@/hooks/use-toast';
 import { clanDataService, type Player, type Clan } from '@/services/clanDataService';
 import { useAuth } from '@/contexts/AuthContext';
