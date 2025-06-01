@@ -187,12 +187,22 @@ export const ClanCheck = ({ clans }: ClanCheckProps) => {
                                   <p className="text-sm font-mono text-muted-foreground">{player.tag.replace('#', '')}</p>
                                 </div>
                               </div>
-                              <Badge 
-                                variant={isInClan ? "default" : "destructive"}
-                                className={isInClan ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"}
-                              >
-                                {isInClan ? "In Clan" : "Not Found"}
-                              </Badge>
+                              {!isInClan && (
+                                <Badge 
+                                  variant="destructive"
+                                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                >
+                                  Not in Clan
+                                </Badge>
+                              )}
+                              {isInClan && (
+                                <Badge 
+                                  variant="default"
+                                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                                >
+                                  In Clan
+                                </Badge>
+                              )}
                             </div>
                           </div>
                         );
