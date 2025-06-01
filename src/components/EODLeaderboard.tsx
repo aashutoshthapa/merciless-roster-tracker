@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,18 +38,20 @@ export const EODLeaderboard = () => {
 
         if (playersError) throw playersError;
 
-        // Combine the EOD records with player data
-        const combinedRecords = data[0].records.map((record: any) => {
-          const player = players.find((p: any) => p.player_tag === record.player_tag);
-          return {
-            id: record.id,
-            player_name: player?.player_name || 'Unknown',
-            player_tag: record.player_tag,
-            trophies: record.trophies,
-            discord_username: player?.discord_username || 'Unknown',
-            recorded_at: data[0].recorded_at,
-          };
-        });
+        // Combine the EOD records with player data and sort by trophies descending
+        const combinedRecords = data[0].records
+          .map((record: any) => {
+            const player = players.find((p: any) => p.player_tag === record.player_tag);
+            return {
+              id: record.player_tag, // Use player_tag as ID since the record doesn't have an ID
+              player_name: player?.player_name || 'Unknown',
+              player_tag: record.player_tag,
+              trophies: record.trophies,
+              discord_username: player?.discord_username || 'Unknown',
+              recorded_at: data[0].recorded_at,
+            };
+          })
+          .sort((a: any, b: any) => b.trophies - a.trophies); // Sort by trophies descending
 
         setRecords(combinedRecords);
       }
@@ -101,7 +104,7 @@ export const EODLeaderboard = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {records.map((record, index) => (
+            {records.map((record) => (
               <div
                 key={record.id}
                 className="flex items-center justify-between p-4 rounded-lg bg-card border"
@@ -114,13 +117,8 @@ export const EODLeaderboard = () => {
                     {record.player_tag} • {record.discord_username}
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-2xl font-bold text-yellow-500">
-                    {record.trophies.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Rank #{index + 1}
-                  </div>
+                <div className="text-2xl font-bold text-yellow-500">
+                  {record.trophies.toLocaleString()}
                 </div>
               </div>
             ))}
@@ -129,4 +127,4 @@ export const EODLeaderboard = () => {
       </CardContent>
     </Card>
   );
-}; 
+};

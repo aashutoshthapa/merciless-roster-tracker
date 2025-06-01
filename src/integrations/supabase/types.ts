@@ -33,12 +33,63 @@ export type Database = {
         }
         Relationships: []
       }
+      eod_records: {
+        Row: {
+          id: string
+          recorded_at: string
+          records: Json
+        }
+        Insert: {
+          id?: string
+          recorded_at?: string
+          records: Json
+        }
+        Update: {
+          id?: string
+          recorded_at?: string
+          records?: Json
+        }
+        Relationships: []
+      }
+      legend_players: {
+        Row: {
+          created_at: string
+          discord_username: string
+          id: string
+          player_name: string
+          player_tag: string
+          trophies: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discord_username: string
+          id?: string
+          player_name: string
+          player_tag: string
+          trophies: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discord_username?: string
+          id?: string
+          player_name?: string
+          player_tag?: string
+          trophies?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      record_eod_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
