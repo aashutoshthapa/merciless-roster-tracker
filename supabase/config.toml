@@ -1,1 +1,5 @@
+
 project_id = "srxwgoximioevyadffwb"
+
+[functions.update-eod-data]
+verify_jwt = false

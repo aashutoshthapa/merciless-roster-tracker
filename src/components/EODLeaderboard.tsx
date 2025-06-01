@@ -34,12 +34,12 @@ export const EODLeaderboard = () => {
         const { data: players, error: playersError } = await supabase
           .from('legend_players')
           .select('*')
-          .in('player_tag', data[0].records.map((r: any) => r.player_tag));
+          .in('player_tag', (data[0].records as any[]).map((r: any) => r.player_tag));
 
         if (playersError) throw playersError;
 
         // Combine the EOD records with player data and sort by trophies descending
-        const combinedRecords = data[0].records
+        const combinedRecords = (data[0].records as any[])
           .map((record: any) => {
             const player = players.find((p: any) => p.player_tag === record.player_tag);
             return {
