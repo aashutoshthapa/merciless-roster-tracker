@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Users, Hash, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Users, Hash, MessageCircle, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { type Clan, type Player } from '@/services/clanDataService';
 import { clashApiService } from '@/services/clashApiService';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +20,8 @@ interface SearchResult {
   clanTag: string;
 }
 
+type PlayerStatus = 'in_clan' | 'not_in_clan' | 'not_found';
+
 const fetchClanMembers = async (clanTag: string): Promise<Player[]> => {
   if (!clanTag) return [];
   try {
@@ -33,17 +35,27 @@ const fetchClanMembers = async (clanTag: string): Promise<Player[]> => {
   }
 };
 
-const checkPlayerInClan = (playerTag: string, clanMembers: Player[]): boolean => {
-  if (!clanMembers || clanMembers.length === 0) {
-    console.log('No clan members to check against');
-    return false;
+const checkPlayerStatus = async (playerTag: string, clanTag: string): Promise<PlayerStatus> => {
+  try {
+    // First verify if the player exists
+    const playerResponse = await fetch(`/.netlify/functions/getPlayer?tag=${playerTag.replace('#', '')}`);
+    if (!playerResponse.ok) {
+      return 'not_found';
+    }
+
+    // Then check if they're in the clan
+    const clanMembers = await fetchClanMembers(clanTag);
+    if (!clanMembers || clanMembers.length === 0) {
+      return 'not_in_clan';
+    }
+
+    const normalizedPlayerTag = playerTag.replace('#', '').toUpperCase();
+    const isInClan = clanMembers.some(member => member.tag.replace('#', '').toUpperCase() === normalizedPlayerTag);
+    return isInClan ? 'in_clan' : 'not_in_clan';
+  } catch (error) {
+    console.error('Error checking player status:', error);
+    return 'not_found';
   }
-  const normalizedPlayerTag = playerTag.replace('#', '').toUpperCase();
-  console.log('Checking player tag:', normalizedPlayerTag);
-  console.log('Against clan members:', clanMembers.map(m => m.tag.replace('#', '').toUpperCase()));
-  const isFound = clanMembers.some(member => member.tag.replace('#', '').toUpperCase() === normalizedPlayerTag);
-  console.log('Player found in clan:', isFound);
-  return isFound;
 };
 
 export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
@@ -140,13 +152,11 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                   Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}:
                 </h3>
                 {searchResults.map((result, index) => {
-                  const { data: clanMembers, isLoading, error } = useQuery({
-                    queryKey: ['clan-members', result.clanTag],
-                    queryFn: () => fetchClanMembers(result.clanTag),
-                    enabled: !!result.clanTag,
+                  const { data: playerStatus, isLoading, error } = useQuery({
+                    queryKey: ['player-status', result.playerTag, result.clanTag],
+                    queryFn: () => checkPlayerStatus(result.playerTag, result.clanTag),
+                    enabled: !!result.playerTag && !!result.clanTag,
                   });
-
-                  const isInClan = clanMembers ? checkPlayerInClan(result.playerTag, clanMembers) : false;
 
                   return (
                     <Card key={index} className="border border-border bg-card rounded-xl">
@@ -156,10 +166,12 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                             <div className="flex items-center space-x-3">
                               {isLoading ? (
                                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                              ) : isInClan ? (
+                              ) : playerStatus === 'in_clan' ? (
                                 <CheckCircle className="h-5 w-5 text-primary" />
-                              ) : (
+                              ) : playerStatus === 'not_in_clan' ? (
                                 <XCircle className="h-5 w-5 text-destructive" />
+                              ) : (
+                                <AlertCircle className="h-5 w-5 text-destructive" />
                               )}
                               <span className="font-semibold responsive-text text-foreground">{result.playerName}</span>
                             </div>
@@ -193,10 +205,12 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                             <p className="text-sm font-mono text-muted-foreground">{result.clanTag}</p>
                             {!isLoading && !error && (
                               <Badge 
-                                variant={isInClan ? "default" : "destructive"}
-                                className={isInClan ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"}
+                                variant={playerStatus === 'in_clan' ? "default" : "destructive"}
+                                className={playerStatus === 'in_clan' ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"}
                               >
-                                {isInClan ? "In Clan" : "Not Found"}
+                                {playerStatus === 'in_clan' ? "In Clan" : 
+                                 playerStatus === 'not_in_clan' ? "Not in Clan" : 
+                                 "Player Not Found"}
                               </Badge>
                             )}
                           </div>
