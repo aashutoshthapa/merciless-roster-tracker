@@ -147,7 +147,7 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                               🔗
                             </Button>
                           </div>
-                          <p className="text-sm font-mono text-muted-foreground">🔗 {result.clanTag}</p>
+                          <p className="text-sm font-mono text-muted-foreground">{result.clanTag}</p>
                         </div>
                       </div>
                     </CardContent>
