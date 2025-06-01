@@ -42,26 +42,6 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Get unique clan tags from search results
-  const uniqueClanTags = [...new Set(searchResults.map(result => result.clanTag))];
-
-  // Fetch clan members for all unique clans in search results
-  const clanMembersQueries = uniqueClanTags.map(clanTag => 
-    useQuery({
-      queryKey: ['clan-members', clanTag],
-      queryFn: () => fetchClanMembers(clanTag),
-      enabled: !!clanTag && hasSearched,
-    })
-  );
-
-  // Create a map of clan tag to members for easy lookup
-  const clanMembersMap = Object.fromEntries(
-    uniqueClanTags.map((clanTag, index) => [
-      clanTag,
-      clanMembersQueries[index].data || []
-    ])
-  );
-
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
 
@@ -102,11 +82,6 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
       handleSearch();
     }
   };
-
-  // Check if any queries are loading
-  const isLoading = clanMembersQueries.some(query => query.isLoading);
-  // Check if any queries have errors
-  const hasError = clanMembersQueries.some(query => query.error);
 
   return (
     <Card className="bg-card shadow-xl border-border rounded-2xl">
@@ -156,8 +131,13 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                   Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}:
                 </h3>
                 {searchResults.map((result, index) => {
-                  const clanMembers = clanMembersMap[result.clanTag] || [];
-                  const isInClan = checkPlayerInClan(result.playerTag, clanMembers);
+                  const { data: clanMembers, isLoading, error } = useQuery({
+                    queryKey: ['clan-members', result.clanTag],
+                    queryFn: () => fetchClanMembers(result.clanTag),
+                    enabled: !!result.clanTag,
+                  });
+
+                  const isInClan = clanMembers ? checkPlayerInClan(result.playerTag, clanMembers) : false;
 
                   return (
                     <Card key={index} className="border border-border bg-card rounded-xl">
@@ -202,7 +182,7 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                               </Button>
                             </div>
                             <p className="text-sm font-mono text-muted-foreground">{result.clanTag}</p>
-                            {!isLoading && !hasError && (
+                            {!isLoading && !error && (
                               <Badge 
                                 variant={isInClan ? "default" : "destructive"}
                                 className={isInClan ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"}
