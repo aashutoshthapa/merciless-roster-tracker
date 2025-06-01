@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Users, Hash, MessageCircle, Trophy, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Player {
   name: string;
@@ -89,7 +90,7 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="flex items-center space-x-2 text-muted-foreground">
                       <Hash className="h-4 w-4" />
-                      <span className="font-mono text-sm">{clan.tag.replace('#', '')}</span>
+                      <span className="font-mono text-sm">🔗 {clan.tag.replace('#', '')}</span>
                     </div>
                     <Badge variant={clan.cwlType === 'Lazy' ? 'destructive' : 'default'} className={clan.cwlType === 'Lazy' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}>
                       <Zap className="h-3 w-3 mr-1" />
@@ -102,6 +103,14 @@ export const ClanRoster = ({ clans }: ClanRosterProps) => {
                     <Badge variant="secondary" className="bg-secondary text-secondary-foreground">
                       {clan.players.length} players
                     </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => window.open(`https://link.clashofclans.com/en?action=OpenClanProfile&tag=${clan.tag.replace('#', '')}`, '_blank')}
+                    >
+                      🔗
+                    </Button>
                   </div>
                 </div>
               </AccordionTrigger>

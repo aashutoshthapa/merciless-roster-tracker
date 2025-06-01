@@ -134,17 +134,20 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                           </div>
                         </div>
                         <div className="flex flex-col items-start sm:items-end gap-2">
-                          <a 
-                            href={`https://link.clashofclans.com/en?action=OpenClanProfile&tag=${result.clanTag.replace('#', '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-primary"
-                          >
+                          <div className="flex items-center gap-2">
                             <Badge className="bg-secondary text-secondary-foreground">
                               {result.clanName}
                             </Badge>
-                          </a>
-                          <p className="text-sm font-mono text-muted-foreground">{result.clanTag}</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2"
+                              onClick={() => window.open(`https://link.clashofclans.com/en?action=OpenClanProfile&tag=${result.clanTag.replace('#', '')}`, '_blank')}
+                            >
+                              🔗
+                            </Button>
+                          </div>
+                          <p className="text-sm font-mono text-muted-foreground">🔗 {result.clanTag}</p>
                         </div>
                       </div>
                     </CardContent>
