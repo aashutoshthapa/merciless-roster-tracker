@@ -3,8 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Users, Hash, MessageCircle } from 'lucide-react';
-import { type Clan } from '@/services/clanDataService';
+import { Search, Users, Hash, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
+import { type Clan, type Player } from '@/services/clanDataService';
+import { clashApiService } from '@/services/clashApiService';
+import { useQuery } from '@tanstack/react-query';
 
 interface PlayerSearchProps {
   clans: Clan[];
@@ -17,6 +19,32 @@ interface SearchResult {
   clanName: string;
   clanTag: string;
 }
+
+const fetchClanMembers = async (clanTag: string): Promise<Player[]> => {
+  if (!clanTag) return [];
+  try {
+    console.log('Fetching clan members for:', clanTag);
+    const members = await clashApiService.getClanMembers(clanTag);
+    console.log('Fetched members:', members);
+    return members;
+  } catch (error) {
+    console.error('Error fetching clan members:', error);
+    throw error;
+  }
+};
+
+const checkPlayerInClan = (playerTag: string, clanMembers: Player[]): boolean => {
+  if (!clanMembers || clanMembers.length === 0) {
+    console.log('No clan members to check against');
+    return false;
+  }
+  const normalizedPlayerTag = playerTag.replace('#', '').toUpperCase();
+  console.log('Checking player tag:', normalizedPlayerTag);
+  console.log('Against clan members:', clanMembers.map(m => m.tag.replace('#', '').toUpperCase()));
+  const isFound = clanMembers.some(member => member.tag.replace('#', '').toUpperCase() === normalizedPlayerTag);
+  console.log('Player found in clan:', isFound);
+  return isFound;
+};
 
 export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,48 +139,72 @@ export const PlayerSearch = ({ clans }: PlayerSearchProps) => {
                 <h3 className="responsive-subheader text-foreground">
                   Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}:
                 </h3>
-                {searchResults.map((result, index) => (
-                  <Card key={index} className="border border-border bg-card rounded-xl">
-                    <CardContent className="p-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-3">
-                            <Users className="h-5 w-5 text-primary" />
-                            <span className="font-semibold responsive-text text-foreground">{result.playerName}</span>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                            <div className="flex items-center space-x-1">
-                              <Hash className="h-4 w-4" />
-                              <span className="font-mono">{result.playerTag.replace('#', '')}</span>
+                {searchResults.map((result, index) => {
+                  const { data: clanMembers, isLoading, error } = useQuery({
+                    queryKey: ['clan-members', result.clanTag],
+                    queryFn: () => fetchClanMembers(result.clanTag),
+                    enabled: !!result.clanTag,
+                  });
+
+                  const isInClan = clanMembers ? checkPlayerInClan(result.playerTag, clanMembers) : false;
+
+                  return (
+                    <Card key={index} className="border border-border bg-card rounded-xl">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-3">
+                              {isLoading ? (
+                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              ) : isInClan ? (
+                                <CheckCircle className="h-5 w-5 text-primary" />
+                              ) : (
+                                <XCircle className="h-5 w-5 text-destructive" />
+                              )}
+                              <span className="font-semibold responsive-text text-foreground">{result.playerName}</span>
                             </div>
-                            {result.discordUsername && (
+                            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                               <div className="flex items-center space-x-1">
-                                <MessageCircle className="h-4 w-4" />
-                                <span>@{result.discordUsername}</span>
+                                <Hash className="h-4 w-4" />
+                                <span className="font-mono">{result.playerTag.replace('#', '')}</span>
                               </div>
+                              {result.discordUsername && (
+                                <div className="flex items-center space-x-1">
+                                  <MessageCircle className="h-4 w-4" />
+                                  <span>@{result.discordUsername}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-start sm:items-end gap-2">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-secondary text-secondary-foreground">
+                                {result.clanName}
+                              </Badge>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => window.open(`https://link.clashofclans.com/en?action=OpenClanProfile&tag=${result.clanTag.replace('#', '')}`, '_blank')}
+                              >
+                                🔗
+                              </Button>
+                            </div>
+                            <p className="text-sm font-mono text-muted-foreground">{result.clanTag}</p>
+                            {!isLoading && !error && (
+                              <Badge 
+                                variant={isInClan ? "default" : "destructive"}
+                                className={isInClan ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"}
+                              >
+                                {isInClan ? "In Clan" : "Not Found"}
+                              </Badge>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col items-start sm:items-end gap-2">
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-secondary text-secondary-foreground">
-                              {result.clanName}
-                            </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 px-2"
-                              onClick={() => window.open(`https://link.clashofclans.com/en?action=OpenClanProfile&tag=${result.clanTag.replace('#', '')}`, '_blank')}
-                            >
-                              🔗
-                            </Button>
-                          </div>
-                          <p className="text-sm font-mono text-muted-foreground">{result.clanTag}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
