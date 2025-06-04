@@ -3,6 +3,3 @@ project_id = "srxwgoximioevyadffwb"
 
 [functions.update-eod-data]
 verify_jwt = false
-
-[functions.refresh-live-leaderboard]
-verify_jwt = false

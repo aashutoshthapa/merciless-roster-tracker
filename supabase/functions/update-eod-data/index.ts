@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting EOD data update process...')
+    console.log('Starting EOD data collection process...')
 
     // Create Supabase client
     const supabaseClient = createClient(
@@ -40,20 +40,19 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Found ${currentPlayers.length} players to update`)
+    console.log(`Found ${currentPlayers.length} players to collect EOD data for`)
 
-    // Fetch fresh data for each player from the API
-    const updatedPlayers = []
+    // Fetch fresh data for each player from the API and create EOD records
     const eodRecords = []
 
     for (const player of currentPlayers) {
       try {
-        console.log(`Fetching fresh data for player: ${player.player_name} (${player.player_tag})`)
+        console.log(`Fetching fresh API data for EOD: ${player.player_name} (${player.player_tag})`)
         
         // Format the player tag for the API call
         const formattedTag = player.player_tag.startsWith('#') ? player.player_tag.substring(1) : player.player_tag
         
-        // Make API call to get fresh player data
+        // Make API call to get fresh player data for EOD recording
         const apiResponse = await fetch(`https://api.clashofclans.com/v1/players/%23${formattedTag}`, {
           headers: {
             'Authorization': `Bearer ${Deno.env.get('COC_API_TOKEN')}`,
@@ -64,7 +63,6 @@ serve(async (req) => {
         if (!apiResponse.ok) {
           console.error(`API request failed for player ${player.player_name}: ${apiResponse.status}`)
           // Use existing data if API call fails
-          updatedPlayers.push(player)
           eodRecords.push({
             player_tag: player.player_tag,
             trophies: player.trophies
@@ -73,40 +71,17 @@ serve(async (req) => {
         }
 
         const apiData = await apiResponse.json()
-        console.log(`Fresh data received for ${player.player_name}: ${apiData.trophies} trophies`)
+        console.log(`Fresh EOD data collected for ${player.player_name}: ${apiData.trophies} trophies`)
 
-        // Update the player in the database with fresh data
-        const { error: updateError } = await supabaseClient
-          .from('legend_players')
-          .update({
-            player_name: apiData.name,
-            trophies: apiData.trophies,
-            updated_at: new Date().toISOString()
-          })
-          .eq('player_tag', player.player_tag)
-
-        if (updateError) {
-          console.error(`Error updating player ${player.player_name}:`, updateError)
-        } else {
-          console.log(`Successfully updated ${player.player_name} with fresh data`)
-        }
-
-        // Add to updated players list and EOD records
-        updatedPlayers.push({
-          ...player,
-          player_name: apiData.name,
-          trophies: apiData.trophies
-        })
-
+        // Add the fresh API data to EOD records
         eodRecords.push({
           player_tag: player.player_tag,
           trophies: apiData.trophies
         })
 
       } catch (error) {
-        console.error(`Error processing player ${player.player_name}:`, error)
+        console.error(`Error processing player ${player.player_name} for EOD:`, error)
         // Use existing data if there's an error
-        updatedPlayers.push(player)
         eodRecords.push({
           player_tag: player.player_tag,
           trophies: player.trophies
@@ -114,8 +89,8 @@ serve(async (req) => {
       }
     }
 
-    // Create EOD record with the fresh data
-    console.log('Creating EOD record with fresh data...')
+    // Create EOD record with the fresh API data
+    console.log('Creating EOD record with fresh API data...')
     const { error: recordError } = await supabaseClient
       .from('eod_records')
       .insert({
@@ -127,19 +102,19 @@ serve(async (req) => {
       throw recordError
     }
 
-    console.log('EOD record created successfully')
+    console.log('EOD record created successfully with fresh API data')
 
     return new Response(
       JSON.stringify({ 
-        message: 'EOD data updated successfully with fresh API data',
-        playersUpdated: updatedPlayers.length,
-        recordsCreated: eodRecords.length
+        message: 'EOD data recorded successfully with fresh API data',
+        recordsCreated: eodRecords.length,
+        timestamp: new Date().toISOString()
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error in EOD update process:', error)
+    console.error('Error in EOD recording process:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
