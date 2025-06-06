@@ -16,4 +16,4 @@ SELECT cron.schedule(
 );
 
 -- Show all current schedules to verify
-SELECT * FROM cron.job; 
+SELECT * FROM cron.job;

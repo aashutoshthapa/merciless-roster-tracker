@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -53,7 +52,7 @@ serve(async (req) => {
         const formattedTag = player.player_tag.startsWith('#') ? player.player_tag.substring(1) : player.player_tag
         
         // Make API call to get fresh player data for EOD recording
-        const apiResponse = await fetch(`https://api.clashofclans.com/v1/players/%23${formattedTag}`, {
+        const apiResponse = await fetch(`https://cocproxy.royaleapi.dev/v1/players/%23${formattedTag}`, {
           headers: {
             'Authorization': `Bearer ${Deno.env.get('COC_API_TOKEN')}`,
             'Accept': 'application/json',
