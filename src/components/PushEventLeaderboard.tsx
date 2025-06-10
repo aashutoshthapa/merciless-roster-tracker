@@ -36,6 +36,7 @@ const fetchPlayerData = async (playerTag: string) => {
 export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardProps) => {
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   const { data: players = [], isLoading, refetch } = useQuery({
     queryKey: ['legend-players', refreshTrigger],
@@ -52,6 +53,7 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
       }
 
       console.log('Fetched players for display:', data);
+      setLastRefreshed(new Date());
       return data || [];
     },
     staleTime: 0, // Always consider the data stale to allow immediate refreshes
@@ -111,6 +113,7 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
 
       // Refetch the data to update the UI
       await refetch();
+      setLastRefreshed(new Date());
       
       toast({
         title: "Success",
@@ -131,7 +134,18 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
-        <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">Leaderboard</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
+          Live Leaderboard
+          {lastRefreshed && (
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              (Last updated: {lastRefreshed.toLocaleString('en-US', {
+                timeZone: 'Asia/Kathmandu',
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              })})
+            </span>
+          )}
+        </CardTitle>
         <Button
           variant="outline"
           size="icon"
@@ -144,7 +158,7 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
       </CardHeader>
       <CardContent>
         {isLoading || isRefreshing ? (
-          <div className="text-center py-8">Loading...</div>
+          <div className="text-center py-8">Fetching latest trophy data...</div>
         ) : players.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No players tracked yet. Be the first to join!
@@ -179,4 +193,4 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
       </CardContent>
     </Card>
   );
-}; 
+};
