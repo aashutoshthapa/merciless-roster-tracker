@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -158,7 +159,12 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
       </CardHeader>
       <CardContent>
         {isLoading || isRefreshing ? (
-          <div className="text-center py-8">Fetching latest trophy data...</div>
+          <div className="text-center py-8">
+            {isRefreshing ? 
+              "Fetching latest trophy data (checking each player individually, may take a few seconds)..." :
+              "Fetching latest trophy data..."
+            }
+          </div>
         ) : players.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No players tracked yet. Be the first to join!
