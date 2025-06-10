@@ -13,6 +13,7 @@ interface EODRecord {
   trophies: number;
   discord_username: string;
   recorded_at: string;
+  trophy_change?: number;
 }
 
 export const EODLeaderboard = () => {
@@ -22,11 +23,12 @@ export const EODLeaderboard = () => {
 
   const fetchRecords = async () => {
     try {
+      // Get the latest 2 EOD records to calculate differences
       const { data, error } = await supabase
         .from('eod_records')
         .select('*')
         .order('recorded_at', { ascending: false })
-        .limit(1);
+        .limit(2);
 
       if (error) throw error;
 
@@ -38,20 +40,36 @@ export const EODLeaderboard = () => {
 
         if (playersError) throw playersError;
 
-        // Combine the EOD records with player data and sort by trophies descending
-        const combinedRecords = (data[0].records as any[])
+        // Get current records (latest)
+        const currentRecords = data[0].records as any[];
+        
+        // Get previous records if available
+        const previousRecords = data.length > 1 ? (data[1].records as any[]) : [];
+        
+        // Create a map of previous trophies for quick lookup
+        const previousTrophiesMap = new Map();
+        previousRecords.forEach((record: any) => {
+          previousTrophiesMap.set(record.player_tag, record.trophies);
+        });
+
+        // Combine the EOD records with player data and calculate trophy changes
+        const combinedRecords = currentRecords
           .map((record: any) => {
             const player = players.find((p: any) => p.player_tag === record.player_tag);
+            const previousTrophies = previousTrophiesMap.get(record.player_tag);
+            const trophyChange = previousTrophies !== undefined ? record.trophies - previousTrophies : undefined;
+            
             return {
-              id: record.player_tag, // Use player_tag as ID since the record doesn't have an ID
+              id: record.player_tag,
               player_name: player?.player_name || 'Unknown',
               player_tag: record.player_tag,
               trophies: record.trophies,
               discord_username: player?.discord_username || 'Unknown',
               recorded_at: data[0].recorded_at,
+              trophy_change: trophyChange,
             };
           })
-          .sort((a: any, b: any) => b.trophies - a.trophies); // Sort by trophies descending
+          .sort((a: any, b: any) => b.trophies - a.trophies);
 
         setRecords(combinedRecords);
       }
@@ -70,6 +88,19 @@ export const EODLeaderboard = () => {
   useEffect(() => {
     fetchRecords();
   }, []);
+
+  const formatTrophyChange = (change: number | undefined) => {
+    if (change === undefined) return null;
+    
+    const sign = change >= 0 ? '+' : '';
+    const colorClass = change >= 0 ? 'text-green-500' : 'text-red-500';
+    
+    return (
+      <div className={`text-sm font-medium ${colorClass}`}>
+        {sign}{change}
+      </div>
+    );
+  };
 
   return (
     <Card>
@@ -117,8 +148,11 @@ export const EODLeaderboard = () => {
                     {record.player_tag} • {record.discord_username}
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-yellow-500">
-                  {record.trophies.toLocaleString()}
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-yellow-500">
+                    {record.trophies.toLocaleString()}
+                  </div>
+                  {formatTrophyChange(record.trophy_change)}
                 </div>
               </div>
             ))}

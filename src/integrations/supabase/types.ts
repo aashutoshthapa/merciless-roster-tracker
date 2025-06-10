@@ -86,10 +86,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      record_eod_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
