@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -184,7 +183,7 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
         {isLoading || isRefreshing ? (
           <div className="text-center py-8">
             {isRefreshing ? 
-              "Refreshing all players in parallel - this should be much faster!" :
+              "Refreshing..." :
               "Fetching latest trophy data..."
             }
           </div>
