@@ -70,47 +70,66 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
 
       if (error) throw error;
 
-      // Update each player's data
-      for (const player of currentPlayers) {
+      console.log(`Starting parallel refresh for ${currentPlayers.length} players...`);
+
+      // Create an array of promises for all player data fetches
+      const playerDataPromises = currentPlayers.map(async (player) => {
         try {
           const playerData = await fetchPlayerData(player.player_tag);
-          console.log('Updating player', player.player_name, 'with trophies:', playerData.trophies);
-          
-          // Update the player's data in Supabase
-          const { data: updateData, error: updateError } = await supabase
-            .from('legend_players')
-            .update({
-              player_name: playerData.name,
-              trophies: playerData.trophies,
-              updated_at: new Date().toISOString()
-            })
-            .eq('player_tag', player.player_tag)
-            .select();
-
-          if (updateError) {
-            console.error(`Error updating player ${player.player_name}:`, updateError);
-          } else {
-            // Verify the update by fetching the player's data again
-            const { data: updatedPlayer, error: verifyError } = await supabase
-              .from('legend_players')
-              .select('*')
-              .eq('player_tag', player.player_tag)
-              .single();
-
-            if (verifyError) {
-              console.error(`Error verifying update for ${player.player_name}:`, verifyError);
-            } else {
-              console.log('Verification - Player in database:', updatedPlayer);
-              if (updatedPlayer.trophies !== playerData.trophies) {
-                console.error(`Trophy count mismatch! Expected ${playerData.trophies} but got ${updatedPlayer.trophies}`);
-              }
-            }
-            console.log('Successfully updated player', player.player_name);
-          }
+          console.log('Fetched data for player', player.player_name, 'with trophies:', playerData.trophies);
+          return {
+            player,
+            playerData,
+            success: true
+          };
         } catch (error) {
           console.error(`Error fetching data for player ${player.player_name}:`, error);
+          return {
+            player,
+            playerData: null,
+            success: false,
+            error
+          };
         }
-      }
+      });
+
+      // Wait for all API calls to complete in parallel
+      const results = await Promise.all(playerDataPromises);
+      console.log('All player data fetches completed');
+
+      // Update all players in parallel as well
+      const updatePromises = results
+        .filter(result => result.success && result.playerData)
+        .map(async ({ player, playerData }) => {
+          try {
+            const { error: updateError } = await supabase
+              .from('legend_players')
+              .update({
+                player_name: playerData.name,
+                trophies: playerData.trophies,
+                updated_at: new Date().toISOString()
+              })
+              .eq('player_tag', player.player_tag);
+
+            if (updateError) {
+              console.error(`Error updating player ${player.player_name}:`, updateError);
+              return { player: player.player_name, success: false, error: updateError };
+            }
+
+            console.log('Successfully updated player', player.player_name);
+            return { player: player.player_name, success: true };
+          } catch (error) {
+            console.error(`Error updating player ${player.player_name}:`, error);
+            return { player: player.player_name, success: false, error };
+          }
+        });
+
+      // Wait for all database updates to complete
+      const updateResults = await Promise.all(updatePromises);
+      const successfulUpdates = updateResults.filter(result => result.success).length;
+      const failedUpdates = updateResults.filter(result => !result.success);
+
+      console.log(`Update completed: ${successfulUpdates} successful, ${failedUpdates.length} failed`);
 
       // Refetch the data to update the UI
       await refetch();
@@ -118,8 +137,12 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
       
       toast({
         title: "Success",
-        description: "Leaderboard refreshed successfully",
+        description: `Leaderboard refreshed successfully (${successfulUpdates}/${currentPlayers.length} players updated)`,
       });
+
+      if (failedUpdates.length > 0) {
+        console.warn('Some players failed to update:', failedUpdates);
+      }
     } catch (error) {
       console.error('Error refreshing leaderboard:', error);
       toast({
@@ -161,7 +184,7 @@ export const PushEventLeaderboard = ({ refreshTrigger }: PushEventLeaderboardPro
         {isLoading || isRefreshing ? (
           <div className="text-center py-8">
             {isRefreshing ? 
-              "Fetching latest trophy data (checking each player individually, may take a few seconds)..." :
+              "Refreshing all players in parallel - this should be much faster!" :
               "Fetching latest trophy data..."
             }
           </div>
