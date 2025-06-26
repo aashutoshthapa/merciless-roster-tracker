@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,13 +10,13 @@ import { toast } from '@/hooks/use-toast';
 
 export const AdminLogin = () => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (login(email, password)) {
+    if (login(username, password)) {
       toast({
         title: "Login Successful",
         description: "Welcome to the admin panel!",
@@ -25,7 +24,7 @@ export const AdminLogin = () => {
     } else {
       toast({
         title: "Login Failed",
-        description: "Invalid email or password.",
+        description: "Invalid username or password.",
         variant: "destructive",
       });
     }
@@ -45,13 +44,13 @@ export const AdminLogin = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your username"
                   required
                 />
               </div>
